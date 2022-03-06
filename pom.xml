@@ -7,6 +7,18 @@
     <groupId>JRTMP_SERVER</groupId>
     <artifactId>JRTMP_SERVER</artifactId>
     <version>1.0.0</version>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>9</source>
+                    <target>9</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -27,17 +39,26 @@
     <dependencies>
 
         <dependency>
-            <groupId>org.red5</groupId>
-            <artifactId>red5-parent</artifactId>
-            <version>1.2.12</version>
-            <type>pom</type>
+            <groupId>org.jboss.netty</groupId>
+            <artifactId>netty</artifactId>
+            <version>3.2.7.Final</version>
+            <scope>compile</scope>
         </dependency>
-
         <dependency>
-            <groupId>org.red5</groupId>
-            <artifactId>red5-server</artifactId>
-            <version>1.2.12</version>
-            <type>jar</type>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.1.2</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>commons-codec</groupId>
+                    <artifactId>commons-codec</artifactId>
+                </exclusion>
+            </exclusions>
+            <scope>compile</scope>
         </dependency>
 
         <dependency>
