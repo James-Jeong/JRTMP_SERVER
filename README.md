@@ -1,2 +1,9 @@
 # JRTMP_SERVER
-RTMP SERVER with RED5-SERVER
+RTMP SERVER
+
+~~~
+
++ REF : flazr
+(http://flazr.sourceforge.net)
+
+~~~
