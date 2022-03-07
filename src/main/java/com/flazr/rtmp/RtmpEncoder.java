@@ -82,10 +82,10 @@ public class RtmpEncoder extends SimpleChannelDownstreamHandler {
             header.setHeaderType(RtmpHeader.Type.LARGE);
         }
         channelPrevHeaders[channelId] = header;        
-        if(logger.isDebugEnabled()) {
+        if(logger.isTraceEnabled()) {
         	// don't print millions of PING_RESPONSE
         	if (message.getHeader().getMessageType() != MessageType.CONTROL || ((Control) message).getType() != Control.Type.PING_RESPONSE)
-        		logger.debug(">> {}", message);
+        		logger.trace(">> {}", message);
         }                
         final ChannelBuffer out = ChannelBuffers.buffer(
                 RtmpHeader.MAX_ENCODED_SIZE + header.getSize() + header.getSize() / chunkSize);

@@ -25,7 +25,7 @@ import com.flazr.util.Utils;
 public class ServerStop {
 
     public static void main(String[] args) {
-        Utils.sendStopSignal(RtmpConfig.configureServerStop());
+        Utils.sendStopSignal(RtmpConfig.configureServerStop("/Users/jamesj/GIT_PROJECTS/JRTMP_SERVER/src/main/resources/config/flazr.properties"));
     }
 
 }

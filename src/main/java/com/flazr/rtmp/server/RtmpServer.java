@@ -43,7 +43,7 @@ public class RtmpServer {
     private static final Logger logger = LoggerFactory.getLogger(RtmpServer.class);
 
     static {
-        RtmpConfig.configureServer();
+        RtmpConfig.configureServer("/Users/jamesj/GIT_PROJECTS/JRTMP_SERVER/src/main/resources/config/flazr.properties");
         CHANNELS = new DefaultChannelGroup("server-channels");
         APPLICATIONS = new ConcurrentHashMap<>();
         TIMER = new HashedWheelTimer(RtmpConfig.TIMER_TICK_SIZE, TimeUnit.MILLISECONDS);

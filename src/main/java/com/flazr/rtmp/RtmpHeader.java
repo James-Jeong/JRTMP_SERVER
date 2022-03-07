@@ -19,7 +19,7 @@
 
 package com.flazr.rtmp;
 
-import com.flazr.rtmp.message.*;
+import com.flazr.rtmp.message.MessageType;
 import com.flazr.util.Utils;
 import com.flazr.util.ValueToEnum;
 import org.jboss.netty.buffer.ChannelBuffer;

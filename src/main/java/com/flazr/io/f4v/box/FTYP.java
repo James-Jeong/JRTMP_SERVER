@@ -19,7 +19,7 @@
 
 package com.flazr.io.f4v.box;
 
-import com.flazr.io.f4v.*;
+import com.flazr.io.f4v.Payload;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.slf4j.Logger;

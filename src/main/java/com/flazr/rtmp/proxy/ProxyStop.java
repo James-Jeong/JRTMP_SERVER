@@ -25,7 +25,7 @@ import com.flazr.util.Utils;
 public class ProxyStop {
 
     public static void main(String[] args) {
-        Utils.sendStopSignal(RtmpConfig.configureProxyStop());
+        Utils.sendStopSignal(RtmpConfig.configureProxyStop("/Users/jamesj/GIT_PROJECTS/JRTMP_SERVER/src/main/resources/config/flazr.properties"));
     }
 
 }

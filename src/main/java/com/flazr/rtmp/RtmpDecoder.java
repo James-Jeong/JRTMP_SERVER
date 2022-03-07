@@ -79,15 +79,15 @@ public class RtmpDecoder extends ReplayingDecoder<DecoderState> {
                     header.setTime(prevHeader.getTime() + header.getDeltaTime());
                 }
                 final RtmpMessage message = MessageType.decode(header, payload);
-                if(logger.isDebugEnabled()) {
+                if(logger.isTraceEnabled()) {
                 	// don't print millions of PING_REQUEST
                 	if (message.getHeader().getMessageType() != MessageType.CONTROL || ((Control) message).getType() != Control.Type.PING_REQUEST)
-                		logger.debug("<< {}", message);
+                		logger.trace("<< {}", message);
                 }
                 payload = null;
                 if(header.isChunkSize()) {
                     final ChunkSize csMessage = (ChunkSize) message;
-                    logger.debug("decoder new chunk size: {}", csMessage);
+                    logger.trace("decoder new chunk size: {}", csMessage);
                     chunkSize = csMessage.getChunkSize();
                 }
                 completedHeaders[channelId] = header;

@@ -2,7 +2,7 @@ package service.monitor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import service.ServiceManager;
+import rtmp.RtmpManager;
 import service.scheduler.job.Job;
 import service.scheduler.schedule.ScheduleManager;
 import service.system.SystemManager;
@@ -37,7 +37,7 @@ public class HaHandler extends Job {
         String memoryUsageStr = systemManager.getHeapMemoryUsage();
 
         logger.debug("| cpu=[{}], mem=[{}], thread=[{}] | RtmpUnitCount=[{}]",
-                cpuUsageStr, memoryUsageStr, Thread.activeCount()
+                cpuUsageStr, memoryUsageStr, Thread.activeCount(), RtmpManager.getInstance().getRtmpUnitMapSize()
         );
     }
 

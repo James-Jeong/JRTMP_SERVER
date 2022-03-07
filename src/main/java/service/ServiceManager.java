@@ -2,6 +2,7 @@ package service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import rtmp.RtmpManager;
 import service.monitor.HaHandler;
 import service.monitor.LongSessionRemover;
 import service.scheduler.schedule.ScheduleManager;
@@ -28,10 +29,12 @@ public class ServiceManager {
     public static final int DELAY = 1000;
 
     private final String tmpdir = System.getProperty("java.io.tmpdir");
-    private final File lockFile = new File(tmpdir, System.getProperty("lock_file", "dash_server.lock"));
+    private final File lockFile = new File(tmpdir, System.getProperty("lock_file", "jrtmp_server.lock"));
     private FileChannel fileChannel;
     private FileLock lock;
     private boolean isQuit = false;
+
+    private final RtmpManager rtmpManager = RtmpManager.getInstance();
     ////////////////////////////////////////////////////////////////////////////////
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -79,6 +82,8 @@ public class ServiceManager {
     }
 
     public void stop () {
+        rtmpManager.stop();
+
         ////////////////////////////////////////
         // FINISH ALL MAIN JOBS
         scheduleManager.stopAll(MAIN_SCHEDULE_JOB);

@@ -2,6 +2,8 @@ package service.monitor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import rtmp.RtmpManager;
+import rtmp.base.RtmpUnit;
 import service.AppInstance;
 import service.ServiceManager;
 import service.scheduler.job.Job;
@@ -25,27 +27,27 @@ public class LongSessionRemover extends Job {
 
     @Override
     public void run() {
-        /*DashManager dashManager = ServiceManager.getInstance().getDashManager();
+        RtmpManager rtmpManager = RtmpManager.getInstance();
 
-        HashMap<String, DashUnit> dashUnitMap = dashManager.getCloneDashMap();
-        if (!dashUnitMap.isEmpty()) {
-            for (Map.Entry<String, DashUnit> entry : dashUnitMap.entrySet()) {
+        HashMap<Integer, RtmpUnit> rtmpUnitMap = rtmpManager.getCloneDashMap();
+        if (!rtmpUnitMap.isEmpty()) {
+            for (Map.Entry<Integer, RtmpUnit> entry : rtmpUnitMap.entrySet()) {
                 if (entry == null) {
                     continue;
                 }
 
-                DashUnit dashUnit = entry.getValue();
-                if (dashUnit == null) {
+                RtmpUnit rtmpUnit = entry.getValue();
+                if (rtmpUnit == null) {
                     continue;
                 }
 
                 long curTime = System.currentTimeMillis();
-                if ((curTime - dashUnit.getInitiationTime()) >= limitTime) {
-                    dashManager.deleteDashUnit(dashUnit.getId());
-                    logger.warn("({}) REMOVED LONG DASH UNIT(DashUnit=\n{})", getName(), dashUnit);
+                if ((curTime - rtmpUnit.getInitiationTime()) >= limitTime) {
+                    rtmpManager.deleteRtmpUnit(rtmpUnit.getId());
+                    logger.warn("({}) REMOVED LONG RTMP UNIT(RtmpUnit=\n{})", getName(), rtmpUnit);
                 }
             }
-        }*/
+        }
     }
     
 }

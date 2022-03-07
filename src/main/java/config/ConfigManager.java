@@ -32,6 +32,7 @@ public class ConfigManager {
     public static final String FIELD_LONG_SESSION_LIMIT_TIME = "LONG_SESSION_LIMIT_TIME";
 
     // RTMP
+    public static final String FIELD_FLAZR_CONF_PATH = "FLAZR_CONF_PATH";
     public static final String FIELD_RTMP_LISTEN_IP = "RTMP_LISTEN_IP";
     public static final String FIELD_RTMP_LISTEN_PORT = "RTMP_LISTEN_PORT";
     ////////////////////////////////////////////////////////////
@@ -43,6 +44,7 @@ public class ConfigManager {
     private long localSessionLimitTime = 0; // ms
 
     // RTMP
+    private String flazrConfPath = null;
     private String rtmpListenIp = null;
     private int rtmpListenPort = 0;
     ////////////////////////////////////////////////////////////
@@ -100,6 +102,12 @@ public class ConfigManager {
      * @brief RTMP Section 을 로드하는 함수
      */
     private void loadRtmpConfig() {
+        this.flazrConfPath = getIniValue(SECTION_RTMP, FIELD_FLAZR_CONF_PATH);
+        if (this.flazrConfPath == null) {
+            logger.error("Fail to load [{}-{}].", SECTION_RTMP, FIELD_FLAZR_CONF_PATH);
+            System.exit(1);
+        }
+
         this.rtmpListenIp = getIniValue(SECTION_RTMP, FIELD_RTMP_LISTEN_IP);
         if (this.rtmpListenIp == null) {
             logger.error("Fail to load [{}-{}].", SECTION_RTMP, FIELD_RTMP_LISTEN_IP);
@@ -169,6 +177,10 @@ public class ConfigManager {
 
     public long getLocalSessionLimitTime() {
         return localSessionLimitTime;
+    }
+
+    public String getFlazrConfPath() {
+        return flazrConfPath;
     }
 
     public String getRtmpListenIp() {

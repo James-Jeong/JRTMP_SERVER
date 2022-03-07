@@ -41,7 +41,7 @@ public class RtmpProxy {
     private static final Logger logger = LoggerFactory.getLogger(RtmpProxy.class);
 
     static {
-        RtmpConfig.configureProxy();
+        RtmpConfig.configureProxy("/Users/jamesj/GIT_PROJECTS/JRTMP_SERVER/src/main/resources/config/flazr.properties");
         ALL_CHANNELS = new DefaultChannelGroup("rtmp-proxy");
     }
 
