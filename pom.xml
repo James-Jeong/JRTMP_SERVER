@@ -7,18 +7,6 @@
     <groupId>JRTMP_SERVER</groupId>
     <artifactId>JRTMP_SERVER</artifactId>
     <version>1.0.0</version>
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>9</source>
-                    <target>9</target>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -135,5 +123,154 @@
         </dependency>
 
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.1</version>
+                <executions>
+                    <execution>
+                        <id>compile</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>testCompile</id>
+                        <phase>test-compile</phase>
+                        <goals>
+                            <goal>testCompile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <source>10</source>
+                    <target>10</target>
+                    <encoding>UTF-8</encoding>
+                    <compilerArgs>
+                        <arg>-Xlint:all</arg>
+                        <arg>-h</arg>
+                        <arg>${project.build.directory}/native/javah/</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>buildnumber-maven-plugin</artifactId>
+                <version>1.0-beta-3</version>
+                <configuration>
+                    <buildNumberPropertyName>buildNumber</buildNumberPropertyName>
+                    <format>{0,date,yyyy/MM/dd}</format>
+                    <items>
+                        <item>timestamp</item>
+                    </items>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>create</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!--<plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>2.1</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>lib</outputDirectory>
+                            <includeScope>compile</includeScope>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>-->
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>rpm-maven-plugin</artifactId>
+                <version>2.0.1</version>
+                <executions>
+                    <execution>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>rpm</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <copyright>2022, UANGEL</copyright>
+                    <group>RTMP_SERVER</group>
+                    <description>rtmp_server</description>
+                    <release>${rpm.release.version}</release>
+                    <autoRequires>false</autoRequires>
+                    <targetOS>linux</targetOS>
+                    <defaultDirmode>755</defaultDirmode>
+                    <defaultFilemode>644</defaultFilemode>
+                    <defaultUsername>uangel</defaultUsername>
+                    <defaultGroupname>uangel</defaultGroupname>
+                    <mappings>
+                        <mapping>
+                            <directory>/home/uangel/urtmp_server/</directory>
+                        </mapping>
+
+                        <mapping>
+                            <directory>/home/uangel/urtmp_server/lib/</directory>
+                            <sources>
+                                <source>
+                                    <location>${project.basedir}/out/artifacts/JRTMP_SERVER_jar/</location>
+                                </source>
+                            </sources>
+                        </mapping>
+
+                        <mapping>
+                            <directory>/home/uangel/urtmp_server/bin/</directory>
+                            <filemode>755</filemode>
+                            <directoryIncluded>false</directoryIncluded>
+                            <sources>
+                                <source>
+                                    <location>${project.basedir}/src/main/resources/bin/run.sh</location>
+                                </source>
+                            </sources>
+                        </mapping>
+
+                        <mapping>
+                            <configuration>noreplace</configuration>
+                            <directory>/home/uangel/urtmp_server/config/</directory>
+                            <sources>
+                                <source>
+                                    <location>${project.basedir}/src/main/resources/config/user_conf.ini</location>
+                                </source>
+                                <source>
+                                    <location>${project.basedir}/src/main/resources/config/logback.xml</location>
+                                </source>
+                                <source>
+                                    <location>${project.basedir}/src/main/resources/config/flazr.properties</location>
+                                </source>
+                            </sources>
+                        </mapping>
+
+                        <mapping>
+                            <directory>/home/uangel/urtmp_server/logs/</directory>
+                            <filemode>755</filemode>
+                        </mapping>
+
+                    </mappings>
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </build>
 
 </project>

@@ -1,14 +1,10 @@
 #!/bin/sh
 
-SERVICE_HOME=/home/uangel/jrtmp_server
-SERVICE_NAME=jrtmp_server
-#LD_LIBRARY_PATH=$SERVICE_HOME/lib
-#export LD_LIBRARY_PATH
-#PATH_TO_JAR=$SERVICE_HOME/lib/JRTMP_SERVER-1.0.0.jar
+SERVICE_HOME=/home/uangel/urtmp_server
+SERVICE_NAME=urtmp_server
 PATH_TO_JAR=$SERVICE_HOME/lib/JRTMP_SERVER.jar
 JAVA_CONF=$SERVICE_HOME/config/user_conf.ini
 JAVA_OPT="-Dlogback.configurationFile=$SERVICE_HOME/config/logback.xml"
-#JAVA_OPT="$JAVA_OPT -Djava.library.path=$SERVICE_HOME/lib"
 JAVA_OPT="$JAVA_OPT -XX:+UseG1GC -XX:G1RSetUpdatingPauseTimePercent=5 -XX:MaxGCPauseMillis=500 -verbose:gc -Xlog:gc=debug:file=$SERVICE_HOME/logs/gc.log:time,uptime,level,tags:filecount=5,filesize=100m"
 
 function exec_start() {

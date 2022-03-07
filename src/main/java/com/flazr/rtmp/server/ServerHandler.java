@@ -113,16 +113,14 @@ public class ServerHandler extends SimpleChannelHandler {
                 break;
             case CONTROL:
                 final Control control = (Control) message;
-                switch(control.getType()) {
-                    case SET_BUFFER:
-                        logger.debug("[ServerHandler] received set buffer: {}", control);
-                        bufferDuration = control.getBufferLength();
-                        if(publisher != null) {
-                            publisher.setBufferDuration(bufferDuration);
-                        }
-                        break;
-                    default:
-                        logger.info("[ServerHandler] ignored control: {}", control);
+                if (control.getType() == Control.Type.SET_BUFFER) {
+                    logger.debug("[ServerHandler] received set buffer: {}", control);
+                    bufferDuration = control.getBufferLength();
+                    if (publisher != null) {
+                        publisher.setBufferDuration(bufferDuration);
+                    }
+                } else {
+                    logger.info("[ServerHandler] ignored control: {}", control);
                 }
                 break;
             case COMMAND_AMF0:

@@ -60,7 +60,7 @@ public class ServerStream {
         if(typeString != null) {
             this.publishType = PublishType.parse(typeString); // TODO record, append
             subscribers = new DefaultChannelGroup(name);
-            configMessages = new ArrayList<RtmpMessage>();
+            configMessages = new ArrayList<>();
         } else {
             this.publishType = null;
             subscribers = null;
