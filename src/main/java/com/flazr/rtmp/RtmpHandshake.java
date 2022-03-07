@@ -487,20 +487,25 @@ public class RtmpHandshake {
         return out;
     }
 
-    public void decodeClient2(ChannelBuffer raw) {
+    public void decodeClient2(ChannelBuffer raw) { // c2 == s1
         ChannelBuffer in = raw.readBytes(HANDSHAKE_SIZE);
         if(validationType == 0) {
             return;
         }
+
         logger.debug("processing client part 2 for validation");
-        byte[] key = Utils.sha256(ownPartOneDigest, CLIENT_CONST_CRUD);
+        /*byte[] key = Utils.sha256(ownPartOneDigest, CLIENT_CONST_CRUD);
         int digestOffset = HANDSHAKE_SIZE - DIGEST_SIZE;
-        byte[] expected = digestHandshake(in, digestOffset, key);
+        byte[] expected = digestHandshake(in, digestOffset, key);*/
+        int digestOffset = digestOffset(in, validationType);
+        byte[] expected = digestHandshake(in, digestOffset, SERVER_CONST);
         byte[] actual = new byte[DIGEST_SIZE];
         in.getBytes(digestOffset, actual);
+
         if (!Arrays.equals(actual, expected)) {
             throw new RuntimeException("client part 2 validation failed " +
-                    "\n(actual=" + Arrays.toString(actual) + "\n, expected=" + Arrays.toString(expected) + ")");
+                    "\n(actual[" + actual.length + "]=" + Arrays.toString(actual) +
+                    "\n, expected[" + expected.length + "]=" + Arrays.toString(expected) + ")");
         }
         logger.info("client part 2 validation success");
     }

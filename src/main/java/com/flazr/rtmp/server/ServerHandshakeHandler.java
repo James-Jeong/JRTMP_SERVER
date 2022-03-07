@@ -44,35 +44,55 @@ public class ServerHandshakeHandler extends FrameDecoder implements ChannelDowns
     }
 
     @Override
-    protected Object decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer in) {        
-        if(!partOneDone) {            
+    protected Object decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer in) {
+        logger.debug("### [READ BUFFER] len: {}", in.readableBytes());
+        if(!partOneDone) {
             if(in.readableBytes() < RtmpHandshake.HANDSHAKE_SIZE + 1) {
                 return null;
             }
             handshake.decodeClient0And1(in);
             rtmpe = handshake.isRtmpe();
             ChannelFuture future = Channels.succeededFuture(channel);
-            Channels.write(ctx, future, handshake.encodeServer0());
-            Channels.write(ctx, future, handshake.encodeServer1());
-            Channels.write(ctx, future, handshake.encodeServer2());
+
+            ChannelBuffer s0Buffer = handshake.encodeServer0();
+            logger.debug("s0Buffer len: {}", s0Buffer.readableBytes());
+            Channels.write(ctx, future, s0Buffer);
+
+            ChannelBuffer s1Buffer = handshake.encodeServer1();
+            logger.debug("s1Buffer len: {}", s1Buffer.readableBytes());
+            Channels.write(ctx, future, s1Buffer);
+
+            ChannelBuffer s2Buffer = handshake.encodeServer2();
+            logger.debug("s2Buffer len: {}", s2Buffer.readableBytes());
+            Channels.write(ctx, future, s2Buffer);
+
             partOneDone = true;
+        } else {
+            if (!handshakeDone) {
+                if (in.readableBytes() < RtmpHandshake.HANDSHAKE_SIZE) {
+                    return null;
+                }
+
+                handshake.decodeClient2(in);
+                handshakeDone = true;
+                logger.info("handshake done, rtmpe: {}", rtmpe);
+                if (Arrays.equals(handshake.getPeerVersion(), Utils.fromHex("00000000"))) {
+                    final ServerHandler serverHandler = ctx.getPipeline().get(ServerHandler.class);
+                    serverHandler.setAggregateModeEnabled(false);
+                    logger.info("old client version, disabled 'aggregate' mode");
+                }
+
+                if (!rtmpe) {
+                    channel.getPipeline().remove(this);
+                }
+            }
+
+            /*ChannelFuture future = Channels.succeededFuture(channel);
+            ChannelBuffer s2Buffer = handshake.encodeServer2();
+            logger.debug("s2Buffer len: {}", s2Buffer.readableBytes());
+            Channels.write(ctx, future, s2Buffer);*/
         }
-        if(!handshakeDone) {
-            if(in.readableBytes() < RtmpHandshake.HANDSHAKE_SIZE) {
-                return null;
-            }
-            handshake.decodeClient2(in);
-            handshakeDone = true;
-            logger.info("handshake done, rtmpe: {}", rtmpe);
-            if(Arrays.equals(handshake.getPeerVersion(), Utils.fromHex("00000000"))) {
-                final ServerHandler serverHandler = ctx.getPipeline().get(ServerHandler.class);
-                serverHandler.setAggregateModeEnabled(false);
-                logger.info("old client version, disabled 'aggregate' mode");
-            }
-            if(!rtmpe) {
-                channel.getPipeline().remove(this);
-            }
-        }
+
         return in;
     }
 
