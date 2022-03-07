@@ -31,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rtmp.RtmpManager;
 import rtmp.base.RtmpUnit;
+import service.StreamIdResourceManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -133,7 +134,12 @@ public class ServerHandler extends SimpleChannelHandler {
                         connectResponse(channel, command);
                         break;
                     case "createStream":
-                        streamId = 1;
+                        streamId = StreamIdResourceManager.getInstance().takeStreamId();
+                        if (streamId == -1) {
+                            logger.warn("[ServerHandler] Fail to get stream id.");
+                            return;
+                        }
+
                         channel.write(Command.createStreamSuccess(command.getTransactionId(), streamId));
                         break;
                     case "play":
@@ -241,6 +247,7 @@ public class ServerHandler extends SimpleChannelHandler {
         if(message.getHeader().getChannelId() > 2) {
             message.getHeader().setStreamId(streamId);
         }
+        logger.debug("[ServerHandler] message: \n{}\n", message);
         channel.write(message);
     }
 
@@ -419,6 +426,7 @@ public class ServerHandler extends SimpleChannelHandler {
 
             /////////////////////////////
             RtmpManager.getInstance().deleteRtmpUnit(streamId);
+            StreamIdResourceManager.getInstance().restoreStreamId(streamId);
             /////////////////////////////
         }
         if(recorder != null) {

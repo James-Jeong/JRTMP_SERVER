@@ -41,11 +41,11 @@ public class ServerHandshakeHandler extends FrameDecoder implements ChannelDowns
 
     public ServerHandshakeHandler() {
         handshake = new RtmpHandshake();
+        logger.debug("[ServerHandshakeHandler] NEW HANDSHAKE: {}", handshake);
     }
 
     @Override
     protected Object decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer in) {
-        logger.debug("### [READ BUFFER] len: {}", in.readableBytes());
         if(!partOneDone) {
             if(in.readableBytes() < RtmpHandshake.HANDSHAKE_SIZE + 1) {
                 return null;
@@ -86,11 +86,6 @@ public class ServerHandshakeHandler extends FrameDecoder implements ChannelDowns
                     channel.getPipeline().remove(this);
                 }
             }
-
-            /*ChannelFuture future = Channels.succeededFuture(channel);
-            ChannelBuffer s2Buffer = handshake.encodeServer2();
-            logger.debug("s2Buffer len: {}", s2Buffer.readableBytes());
-            Channels.write(ctx, future, s2Buffer);*/
         }
 
         return in;

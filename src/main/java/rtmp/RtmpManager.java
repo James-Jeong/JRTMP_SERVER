@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rtmp.base.RtmpUnit;
 import service.AppInstance;
+import service.StreamIdResourceManager;
 
 import java.net.InetSocketAddress;
 import java.util.HashMap;
@@ -48,6 +49,7 @@ public class RtmpManager {
         this.CHANNELS = new DefaultChannelGroup("rtmp-server-channels");
         this.APPLICATIONS = new ConcurrentHashMap<>();
 
+        StreamIdResourceManager.getInstance().initResource();
         initRtmpServer();
     }
 

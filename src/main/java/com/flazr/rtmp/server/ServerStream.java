@@ -85,7 +85,6 @@ public class ServerStream {
         return name;
     }
 
-
     public List<RtmpMessage> getConfigMessages() {
         return configMessages;
     }
