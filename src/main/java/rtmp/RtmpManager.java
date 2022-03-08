@@ -1,8 +1,8 @@
 package rtmp;
 
-import com.flazr.rtmp.RtmpConfig;
-import com.flazr.rtmp.server.ServerApplication;
-import com.flazr.rtmp.server.ServerPipelineFactory;
+import rtmp.flazr.rtmp.RtmpConfig;
+import rtmp.flazr.rtmp.server.ServerApplication;
+import rtmp.flazr.rtmp.server.ServerPipelineFactory;
 import config.ConfigManager;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.ChannelFactory;
@@ -79,8 +79,10 @@ public class RtmpManager {
         final ChannelGroupFuture future = CHANNELS.close();
         logger.info("[RtmpManager] Closing rtmp channels...");
         future.awaitUninterruptibly();
-        //logger.info("[RtmpManager] Releasing rtmp resources...");
-        //factory.releaseExternalResources();
+        /*if (factory != null) {
+            logger.info("[RtmpManager] Releasing rtmp resources...");
+            factory.releaseExternalResources();
+        }*/
         logger.info("[RtmpManager] RTMP Server stopped.");
     }
     ////////////////////////////////////////////////////////////
