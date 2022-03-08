@@ -68,6 +68,6 @@ public abstract class DataMessage extends AbstractMessage {
         return super.toString() + ChannelBuffers.hexDump(data);
     }
 
-    public abstract boolean isConfig(); // TODO abstraction for audio / video ?
+    public abstract boolean isConfig();
 
 }

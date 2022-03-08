@@ -146,11 +146,10 @@ public class ServerHandler extends SimpleChannelHandler {
                     case "deleteStream":
                         int deleteStreamId = ((Double) command.getArg(0)).intValue();
                         logger.info("[ServerHandler] deleting stream id: {}", deleteStreamId);
-                        // TODO ?
                         break;
                     case "closeStream":
                         final int clientStreamId = command.getHeader().getStreamId();
-                        logger.info("[ServerHandler] closing stream id: {}", clientStreamId); // TODO
+                        logger.info("[ServerHandler] closing stream id: {}", clientStreamId);
 
                         unpublishIfLive();
                         break;

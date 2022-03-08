@@ -50,7 +50,7 @@ public class ClientHandler extends SimpleChannelUpstreamHandler {
 	/**
 	 * Shared objects map
 	 */
-	private volatile ConcurrentMap<String, ClientSharedObject> sharedObjects = new ConcurrentHashMap<String, ClientSharedObject>();
+	private final ConcurrentMap<String, ClientSharedObject> sharedObjects = new ConcurrentHashMap<String, ClientSharedObject>();
 
     protected RtmpWriter writer;
 
@@ -63,7 +63,7 @@ public class ClientHandler extends SimpleChannelUpstreamHandler {
     public RtmpPublisher publisher;
     public int streamId;    
 
-    private Map<Integer, Integer> streamChannel = new HashMap<Integer, Integer>();
+    private final Map<Integer, Integer> streamChannel = new HashMap<>();
 
     protected synchronized int holdChannel(int streamId) {
     	Integer next = streamChannel.get(streamId);
@@ -250,32 +250,36 @@ public class ClientHandler extends SimpleChannelUpstreamHandler {
         final String messageStr = level + " onStatus message, code: " + code + ", description: " + description + ", application: " + application;
         
         // http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/events/NetStatusEvent.html
-        if (level.equals("status")) {
-        	logger.info(messageStr);
-            if (code.equals("NetStream.Publish.Start")
-            		&& publisher != null && !publisher.isStarted()) {
-        		logger.debug("starting the publisher after NetStream.Publish.Start");
-            	publisher.start(channel, options.getStart(), options.getLength(), new ChunkSize(4096));
-            } else if (code.equals("NetStream.Unpublish.Success")
-            		&& publisher != null) {
-                logger.info("unpublish success, closing channel");
-                ChannelFuture future = channel.write(Command.closeStream(streamId));
-                future.addListener(ChannelFutureListener.CLOSE);
-            } else if (code.equals("NetStream.Play.Stop")) {
-            	if (closeChannelWhenStreamStopped) {
-                	channel.close();
-            	}
-            }
-        } else if (level.equals("warning")) {
-        	logger.warn(messageStr);
-        	if (code.equals("NetStream.Play.InsufficientBW")) {
-                ChannelFuture future = channel.write(Command.closeStream(streamId));
-                future.addListener(ChannelFutureListener.CLOSE);
-                // \TODO create a listener for insufficient bandwidth
-        	}
-        } else if (level.equals("error")) {
-        	logger.error(messageStr);
-            channel.close();
+        switch (level) {
+            case "status":
+                logger.info(messageStr);
+                if (code.equals("NetStream.Publish.Start")
+                        && publisher != null && !publisher.isStarted()) {
+                    logger.debug("starting the publisher after NetStream.Publish.Start");
+                    publisher.start(channel, options.getStart(), options.getLength(), new ChunkSize(4096));
+                } else if (code.equals("NetStream.Unpublish.Success")
+                        && publisher != null) {
+                    logger.info("unpublish success, closing channel");
+                    ChannelFuture future = channel.write(Command.closeStream(streamId));
+                    future.addListener(ChannelFutureListener.CLOSE);
+                } else if (code.equals("NetStream.Play.Stop")) {
+                    if (closeChannelWhenStreamStopped) {
+                        channel.close();
+                    }
+                }
+                break;
+            case "warning":
+                logger.warn(messageStr);
+                if (code.equals("NetStream.Play.InsufficientBW")) {
+                    ChannelFuture future = channel.write(Command.closeStream(streamId));
+                    future.addListener(ChannelFutureListener.CLOSE);
+                    // TODO create a listener for insufficient bandwidth
+                }
+                break;
+            case "error":
+                logger.error(messageStr);
+                channel.close();
+                break;
         }
 	}
 
@@ -298,7 +302,7 @@ public class ClientHandler extends SimpleChannelUpstreamHandler {
                     reader = new LoopedReader(reader, options.getLoop());
                 }
                 // the use of useSharedTimer=true results in a memory leak on the shared timer
-                // \TODO remove this option from RtmpPublisher - it probably should never use
+                // TODO remove this option from RtmpPublisher - it probably should never use
                 // a shared timer
                 publisher = new RtmpPublisher(reader, streamId, options.getBuffer(), false, false) {
                     @Override protected RtmpMessage[] getStopMessages(long timePosition) {
@@ -306,7 +310,6 @@ public class ClientHandler extends SimpleChannelUpstreamHandler {
                     }
                 };                            
                 channel.write(Command.publish(streamId, holdChannel(streamId), options));
-                return;
             } else {
                 writer = options.getWriterToSave();
                 // do not create a writer if it wasn't set on the options

@@ -24,6 +24,7 @@ import org.jboss.netty.buffer.ChannelBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -160,11 +161,11 @@ public class Amf0Value {
         final int size = in.readUnsignedShort();
         final byte[] bytes = new byte[size];
         in.readBytes(bytes);
-        return new String(bytes); // TODO UTF-8 ?
+        return new String(bytes, StandardCharsets.UTF_8);
     }
 
     private static void encodeString(final ChannelBuffer out, final String value) {
-        final byte[] bytes = value.getBytes(); // TODO UTF-8 ?
+        final byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
         out.writeShort((short) bytes.length);
         out.writeBytes(bytes);
     }
@@ -262,7 +263,7 @@ public class Amf0Value {
                 final int stringSize = in.readInt();
                 final byte[] bytes = new byte[stringSize];
                 in.readBytes(bytes);
-                return new String(bytes); // TODO UTF-8 ?
+                return new String(bytes, StandardCharsets.UTF_8);
             case NULL:
             case UNDEFINED:
             case UNSUPPORTED:

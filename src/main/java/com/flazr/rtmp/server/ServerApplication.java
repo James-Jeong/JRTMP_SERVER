@@ -26,9 +26,12 @@ import com.flazr.rtmp.RtmpConfig;
 import com.flazr.rtmp.RtmpReader;
 import com.flazr.rtmp.RtmpWriter;
 import com.flazr.util.Utils;
+import config.ConfigManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rtmp.RtmpManager;
+import service.AppInstance;
+import util.module.FileManager;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -42,7 +45,7 @@ public class ServerApplication {
 
     public ServerApplication(final String rawName) {
         this.name = cleanName(rawName);        
-        streams = new ConcurrentHashMap<String, ServerStream>();        
+        streams = new ConcurrentHashMap<>();
     }
 
     public String getName() {
@@ -50,20 +53,23 @@ public class ServerApplication {
     }
 
     public RtmpReader getReader(final String rawName) {
+        ConfigManager configManager = AppInstance.getInstance().getConfigManager();
+
         final String streamName = Utils.trimSlashes(rawName);
-        final String path = RtmpConfig.SERVER_HOME_DIR + "/apps/" + name + "/";
+        final String basePath = FileManager.concatFilePath(RtmpConfig.SERVER_HOME_DIR, configManager.getRtmpMediaBaseName());
+        final String path = FileManager.concatFilePath(basePath, name);
         final String readerPlayName;
         try {
             if(streamName.startsWith("mp4:")) {
                 readerPlayName = streamName.substring(4);
-                return new F4vReader(path + readerPlayName);
+                return new F4vReader(FileManager.concatFilePath(path, readerPlayName));
             } else {                
                 if(streamName.lastIndexOf('.') < streamName.length() - 4) {
                     readerPlayName = streamName + ".flv";
                 } else {
                     readerPlayName = streamName;
                 }
-                return new FlvReader(path + readerPlayName);
+                return new FlvReader(FileManager.concatFilePath(path, readerPlayName));
             }
         } catch(Exception e) {
             logger.info("reader creation failed: {}", e.getMessage());
@@ -72,9 +78,12 @@ public class ServerApplication {
     }
 
     public RtmpWriter getWriter(final String rawName) {
+        ConfigManager configManager = AppInstance.getInstance().getConfigManager();
+
         final String streamName = Utils.trimSlashes(rawName);
-        final String path = RtmpConfig.SERVER_HOME_DIR + "/apps/" + name + "/";
-        return new FlvWriter(path + streamName + ".flv");
+        final String basePath = FileManager.concatFilePath(RtmpConfig.SERVER_HOME_DIR, configManager.getRtmpMediaBaseName());
+        final String path = FileManager.concatFilePath(basePath, name);
+        return new FlvWriter(FileManager.concatFilePath(path, streamName) + ".flv");
     }
 
     public static ServerApplication get(final String rawName) {

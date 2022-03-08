@@ -35,6 +35,7 @@ public class ConfigManager {
     public static final String FIELD_FLAZR_CONF_PATH = "FLAZR_CONF_PATH";
     public static final String FIELD_RTMP_LISTEN_IP = "RTMP_LISTEN_IP";
     public static final String FIELD_RTMP_LISTEN_PORT = "RTMP_LISTEN_PORT";
+    public static final String FIELD_RTMP_MEDIA_BASE_NAME = "RTMP_MEDIA_BASE_NAME";
     ////////////////////////////////////////////////////////////
 
     ////////////////////////////////////////////////////////////
@@ -47,6 +48,7 @@ public class ConfigManager {
     private String flazrConfPath = null;
     private String rtmpListenIp = null;
     private int rtmpListenPort = 0;
+    private String rtmpMediaBaseName = null;
     ////////////////////////////////////////////////////////////
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -126,6 +128,12 @@ public class ConfigManager {
             }
         }
 
+        this.rtmpMediaBaseName = getIniValue(SECTION_RTMP, FIELD_RTMP_MEDIA_BASE_NAME);
+        if (this.rtmpMediaBaseName == null) {
+            logger.error("Fail to load [{}-{}].", SECTION_RTMP, FIELD_RTMP_MEDIA_BASE_NAME);
+            System.exit(1);
+        }
+
         logger.debug("Load [{}] config...(OK)", SECTION_RTMP);
     }
 
@@ -189,5 +197,9 @@ public class ConfigManager {
 
     public int getRtmpListenPort() {
         return rtmpListenPort;
+    }
+
+    public String getRtmpMediaBaseName() {
+        return rtmpMediaBaseName;
     }
 }

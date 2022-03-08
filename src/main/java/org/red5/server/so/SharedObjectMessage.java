@@ -357,7 +357,7 @@ public class SharedObjectMessage extends AbstractMessage implements ISharedObjec
 		in.skipBytes(4);
 		
 		if (events == null)
-			events = new ConcurrentLinkedQueue<ISharedObjectEvent>();
+			events = new ConcurrentLinkedQueue<>();
 		
 		while (in.readableBytes() > 0) {
 			ISharedObjectEvent.Type type = SharedObjectTypeMapping.toType(in.readByte());
