@@ -115,7 +115,7 @@ public class RtmpHandshake {
     private static final Map<Integer, Integer> clientVersionToValidationTypeMap;
 
     static {
-        Map<Integer, Integer> map = new HashMap<Integer, Integer>();
+        Map<Integer, Integer> map = new HashMap<>();
         map.put(0x09007c02, 1);
         map.put(0x09009702, 1);
         map.put(0x09009f02, 1);
@@ -494,20 +494,20 @@ public class RtmpHandshake {
         }
 
         logger.debug("processing client part 2 for validation");
-        /*byte[] key = Utils.sha256(ownPartOneDigest, CLIENT_CONST_CRUD);
+        byte[] key = Utils.sha256(ownPartOneDigest, CLIENT_CONST_CRUD);
         int digestOffset = HANDSHAKE_SIZE - DIGEST_SIZE;
-        byte[] expected = digestHandshake(in, digestOffset, key);*/
-        int digestOffset = digestOffset(in, validationType);
-        byte[] expected = digestHandshake(in, digestOffset, SERVER_CONST);
+        byte[] expected = digestHandshake(in, digestOffset, key);
+        /*int digestOffset = digestOffset(in, validationType);
+        byte[] expected = digestHandshake(in, digestOffset, SERVER_CONST);*/
 
         byte[] actual = new byte[DIGEST_SIZE];
         in.getBytes(digestOffset, actual);
 
-        /*if (!Arrays.equals(actual, expected)) {
-            throw new RuntimeException("client part 2 validation failed " +
+        if (!Arrays.equals(actual, expected)) {
+            /*throw new RuntimeException("client part 2 validation failed " +
                     "\n(actual[" + actual.length + "]=" + Arrays.toString(actual) +
-                    "\n, expected[" + expected.length + "]=" + Arrays.toString(expected) + ")");
-        }*/
+                    "\n, expected[" + expected.length + "]=" + Arrays.toString(expected) + ")");*/
+        }
         logger.info("client part 2 validation success");
     }
 

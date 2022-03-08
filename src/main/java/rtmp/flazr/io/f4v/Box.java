@@ -94,8 +94,7 @@ public class Box {
         if(logger.isDebugEnabled()) {
             final char[] chars = new char[level * 2];
             Arrays.fill(chars, ' ');
-            logger.debug("{} recursing {}, payload: {}",
-                    new Object[]{String.valueOf(chars), box.type, box.payload});
+            logger.debug("{} recursing {}, payload: {}", String.valueOf(chars), box.type, box.payload);
         }        
         if(collect != null && box.getPayload() != null) {
             collect.add(box);

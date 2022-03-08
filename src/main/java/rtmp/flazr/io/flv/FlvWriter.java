@@ -78,9 +78,10 @@ public class FlvWriter implements RtmpWriter {
             return;
         }
         logger.info("finished in {} seconds, media duration: {} seconds (seek time: {})",
-                new Object[]{(System.currentTimeMillis() - startTime) / 1000,
-                (channelTimes[primaryChannel] - seekTime) / 1000, 
-                seekTime / 1000});
+                (System.currentTimeMillis() - startTime) / 1000,
+                (channelTimes[primaryChannel] - seekTime) / 1000,
+                seekTime / 1000
+        );
     }
 
     private void logWriteProgress() {

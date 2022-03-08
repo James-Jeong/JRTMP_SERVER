@@ -42,17 +42,17 @@ public abstract class RtmpPublisher {
     private final boolean aggregateModeEnabled;
 
     private final RtmpReader reader;
-    private int streamId;
-    private long startTime;    
+    private final int streamId;
+    private long startTime;
     private long seekTime;
     private long timePosition;
-    private int currentConversationId;    
+    private int currentConversationId;
     private int playLength = -1;
     private boolean paused;
     private int bufferDuration;
-    
+
     public Channel channel;
-	private int channelId = 8;
+    private int channelId = 8;
 
     public static class Event {
 
@@ -69,12 +69,12 @@ public abstract class RtmpPublisher {
         }
 
         public int getStreamId() {
-        	return streamId;
+            return streamId;
         }
     }
 
-    public RtmpPublisher(final RtmpReader reader, final int streamId, final int bufferDuration, 
-            boolean useSharedTimer, boolean aggregateModeEnabled) {
+    public RtmpPublisher(final RtmpReader reader, final int streamId, final int bufferDuration,
+                         boolean useSharedTimer, boolean aggregateModeEnabled) {
         this.aggregateModeEnabled = aggregateModeEnabled;
         this.usingSharedTimer = useSharedTimer;
         if(useSharedTimer) {
@@ -111,11 +111,11 @@ public abstract class RtmpPublisher {
         this.bufferDuration = bufferDuration;
     }
 
-    public boolean handle(final MessageEvent me) {        
+    public boolean handle(final MessageEvent me) {
         if(me.getMessage() instanceof Event) {
             final Event pe = (Event) me.getMessage();
             if(pe.streamId != streamId) {
-            	return false;
+                return false;
             }
             if(pe.conversationId != currentConversationId) {
                 logger.debug("stopping obsolete conversation id: {}, current: {}",
@@ -130,14 +130,14 @@ public abstract class RtmpPublisher {
 
     public void start(final Channel channel, final int seekTime, final int playLength, final RtmpMessage ... messages) {
         this.channel = channel;
-    	this.playLength = playLength;
+        this.playLength = playLength;
         start(channel, seekTime, messages);
     }
 
     public void start(final Channel channel, final int seekTimeRequested, final RtmpMessage ... messages) {
         paused = false;
         currentConversationId++;
-        startTime = System.currentTimeMillis();        
+        startTime = System.currentTimeMillis();
         if(seekTimeRequested >= 0) {
             seekTime = reader.seek(seekTimeRequested);
         } else {
@@ -145,7 +145,8 @@ public abstract class RtmpPublisher {
         }
         timePosition = seekTime;
         logger.debug("publish start, seek requested: {} actual seek: {}, play length: {}, conversation: {}",
-                new Object[]{seekTimeRequested, seekTime, playLength, currentConversationId});
+                seekTimeRequested, seekTime, playLength, currentConversationId
+        );
         for(final RtmpMessage message : messages) {
             writeToStream(channel, message);
         }
@@ -187,44 +188,41 @@ public abstract class RtmpPublisher {
             reader.setAggregateDuration((int) clientBuffer);
         } else {
             reader.setAggregateDuration(0);
-        }        
+        }
         final RtmpHeader header = message.getHeader();
         final double compensationFactor = clientBuffer / (bufferDuration + timerTickSize);
         final long delay = (long) ((header.getTime() - timePosition) * compensationFactor);
         if(logger.isDebugEnabled()) {
             logger.debug("elapsed: {}, streamed: {}, buffer: {}, factor: {}, delay: {}",
-                    new Object[]{elapsedTimePlusSeek, timePosition, clientBuffer, compensationFactor, delay});
+                    elapsedTimePlusSeek, timePosition, clientBuffer, compensationFactor, delay
+            );
         }
         timePosition = header.getTime();
         header.setStreamId(streamId);
         header.setChannelId(channelId);
         final ChannelFuture future = channel.write(message);
-        future.addListener(new ChannelFutureListener() {
-            @Override public void operationComplete(final ChannelFuture cf) {
-                final long completedIn = System.currentTimeMillis() - writeTime;
-                if(completedIn > 2000) {
-                    logger.warn("channel busy? time taken to write last message: {}", completedIn);
-                }                
-                final long delayToUse = clientBuffer > 0 ? delay - completedIn : 0;
-                fireNext(channel, delayToUse);
+        future.addListener(cf -> {
+            final long completedIn = System.currentTimeMillis() - writeTime;
+            if(completedIn > 2000) {
+                logger.warn("channel busy? time taken to write last message: {}", completedIn);
             }
+            final long delayToUse = clientBuffer > 0 ? delay - completedIn : 0;
+            fireNext(channel, delayToUse);
         });
     }
 
     public void fireNext(final Channel channel, final long delay) {
         final Event readyForNext = new Event(currentConversationId, streamId);
         if(delay > timerTickSize) {
-            timer.newTimeout(new TimerTask() {
-                @Override public void run(Timeout timeout) {
-                    if(logger.isDebugEnabled()) {
-                        logger.debug("running after delay: {}", delay);
-                    }
-                    if(readyForNext.conversationId != currentConversationId) {
-                        logger.debug("pending 'next' event found obsolete, aborting");
-                        return;
-                    }
-                    Channels.fireMessageReceived(channel, readyForNext);
+            timer.newTimeout(timeout -> {
+                if(logger.isDebugEnabled()) {
+                    logger.debug("running after delay: {}", delay);
                 }
+                if(readyForNext.conversationId != currentConversationId) {
+                    logger.debug("pending 'next' event found obsolete, aborting");
+                    return;
+                }
+                Channels.fireMessageReceived(channel, readyForNext);
             }, delay, TimeUnit.MILLISECONDS);
         } else {
             Channels.fireMessageReceived(channel, readyForNext);
@@ -240,7 +238,8 @@ public abstract class RtmpPublisher {
         currentConversationId++;
         final long elapsedTime = System.currentTimeMillis() - startTime;
         logger.info("finished, start: {}, elapsed {}, streamed: {}",
-                new Object[]{seekTime / 1000, elapsedTime / 1000, (timePosition - seekTime) / 1000});
+                seekTime / 1000, elapsedTime / 1000, (timePosition - seekTime) / 1000
+        );
         for(RtmpMessage message : getStopMessages(timePosition)) {
             writeToStream(channel, message);
         }
@@ -250,13 +249,13 @@ public abstract class RtmpPublisher {
         if(!usingSharedTimer) {
             timer.stop();
         }
-        reader.close();        
+        reader.close();
     }
 
     protected abstract RtmpMessage[] getStopMessages(long timePosition);
 
-	public void setChannelId(int channelId) {
-		this.channelId  = channelId;
-	}
+    public void setChannelId(int channelId) {
+        this.channelId  = channelId;
+    }
 
 }

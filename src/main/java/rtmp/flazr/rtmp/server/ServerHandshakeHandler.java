@@ -55,15 +55,15 @@ public class ServerHandshakeHandler extends FrameDecoder implements ChannelDowns
             ChannelFuture future = Channels.succeededFuture(channel);
 
             ChannelBuffer s0Buffer = handshake.encodeServer0();
-            logger.debug("s0Buffer len: {}", s0Buffer.readableBytes());
+            //logger.debug("s0Buffer len: {}", s0Buffer.readableBytes());
             Channels.write(ctx, future, s0Buffer);
 
             ChannelBuffer s1Buffer = handshake.encodeServer1();
-            logger.debug("s1Buffer len: {}", s1Buffer.readableBytes());
+            //logger.debug("s1Buffer len: {}", s1Buffer.readableBytes());
             Channels.write(ctx, future, s1Buffer);
 
             ChannelBuffer s2Buffer = handshake.encodeServer2();
-            logger.debug("s2Buffer len: {}", s2Buffer.readableBytes());
+            //logger.debug("s2Buffer len: {}", s2Buffer.readableBytes());
             Channels.write(ctx, future, s2Buffer);
 
             partOneDone = true;
@@ -75,11 +75,11 @@ public class ServerHandshakeHandler extends FrameDecoder implements ChannelDowns
 
                 handshake.decodeClient2(in);
                 handshakeDone = true;
-                logger.info("handshake done, rtmpe: {}", rtmpe);
+                logger.debug("handshake done, rtmpe: {}", rtmpe);
                 if (Arrays.equals(handshake.getPeerVersion(), Utils.fromHex("00000000"))) {
                     final ServerHandler serverHandler = ctx.getPipeline().get(ServerHandler.class);
                     serverHandler.setAggregateModeEnabled(false);
-                    logger.info("old client version, disabled 'aggregate' mode");
+                    logger.warn("old client version, disabled 'aggregate' mode");
                 }
 
                 if (!rtmpe) {

@@ -47,8 +47,8 @@ public class F4vReader implements RtmpReader {
     private static final byte[] AVC1_PREFIX_KEYFRAME = Utils.fromHex("1701");
     private static final byte[] AVC1_PREFIX = Utils.fromHex("2701");
 
-    private byte[] AVC1_BEGIN;
-    private byte[] MP4A_BEGIN;
+    private final byte[] AVC1_BEGIN;
+    private final byte[] MP4A_BEGIN;
 
     private final BufferReader in;
     private final List<Sample> samples;

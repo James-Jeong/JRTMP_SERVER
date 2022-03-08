@@ -72,7 +72,7 @@ public class MDHD implements Payload {
             duration = in.readLong();
         }
         logger.debug("creationTime {} modificationTime {} timeScale {} duration {}",
-                new Object[]{creationTime, modificationTime, timeScale, duration}
+                creationTime, modificationTime, timeScale, duration
         );
         pad = in.readByte();
         language = in.readByte(); // TODO convert to ISO codes ?

@@ -90,7 +90,7 @@ public class ClientHandler extends SimpleChannelUpstreamHandler {
 	 * @return Client shared object instance
 	 */
 	public synchronized IClientSharedObject getSharedObject(String name, boolean persistent) {
-		logger.debug("getSharedObject name: {} persistent {}", new Object[] { name, persistent });
+		logger.debug("getSharedObject name: {} persistent {}", name, persistent);
 		ClientSharedObject result = sharedObjects.get(name);
 		if (result != null) {
 			if (result.isPersistentObject() != persistent) {

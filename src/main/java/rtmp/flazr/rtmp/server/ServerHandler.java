@@ -41,12 +41,12 @@ public class ServerHandler extends SimpleChannelHandler {
     
     private static final Logger logger = LoggerFactory.getLogger(ServerHandler.class);
 
-    private int bytesReadWindow = 2500000;
+    private final int bytesReadWindow = 2500000;
     private long bytesRead;
     private long bytesReadLastSent;
 
     private long bytesWritten;
-    private int bytesWrittenWindow = 2500000;
+    private final int bytesWrittenWindow = 2500000;
     private int bytesWrittenLastReceived;   
 
     private ServerApplication application;
@@ -68,7 +68,7 @@ public class ServerHandler extends SimpleChannelHandler {
     @Override
     public void channelOpen(final ChannelHandlerContext ctx, final ChannelStateEvent e) {
         RtmpServer.CHANNELS.add(e.getChannel());
-        logger.info("[ServerHandler] opened channel: {}", e);
+        logger.info("[ServerHandler] channel is opened: {}", e);
     }
 
     @Override
@@ -78,7 +78,7 @@ public class ServerHandler extends SimpleChannelHandler {
 
     @Override
     public void channelClosed(final ChannelHandlerContext ctx, final ChannelStateEvent e) {
-        logger.info("[ServerHandler] channel closed: {}", e);
+        logger.info("[ServerHandler] channel is closed: {}", e);
         if(publisher != null) {
             publisher.close();
         }
@@ -108,6 +108,7 @@ public class ServerHandler extends SimpleChannelHandler {
             channel.write(ack);
             bytesReadLastSent = bytesRead;
         }
+
         switch(message.getHeader().getMessageType()) {
             case CHUNK_SIZE: // handled by decoder
                 break;
@@ -272,22 +273,26 @@ public class ServerHandler extends SimpleChannelHandler {
         if(play.getArgCount() > 2) {
             playLength = ((Double) play.getArg(2)).intValue();
         }
+
         final boolean playReset;
         if(play.getArgCount() > 3) {
             playReset = ((Boolean) play.getArg(3));
         } else {
             playReset = true;
         }
+
         final Command playResetCommand = playReset ? Command.playReset(playName, clientId) : null;
         final String clientPlayName = (String) play.getArg(0);
         final ServerStream stream = application.getStream(clientPlayName);
         logger.debug("[ServerHandler] play name {}, start {}, length {}, reset {}",
-                new Object[]{clientPlayName, playStart, playLength, playReset}
+                clientPlayName, playStart, playLength, playReset
         );
+
         if(stream.isLive()) {                  
             for(final RtmpMessage message : getStartMessages(playResetCommand)) {
                 writeToStream(channel, message);
             }
+
             boolean videoConfigPresent = false;
             for(RtmpMessage message : stream.getConfigMessages()) {
                 logger.info("[ServerHandler] writing start meta / config: {}", message);
@@ -299,10 +304,12 @@ public class ServerHandler extends SimpleChannelHandler {
             if(!videoConfigPresent) {
                 writeToStream(channel, Video.empty());
             }
+
             stream.getSubscribers().add(channel);
             logger.info("[ServerHandler] client requested live stream: {}, added to stream: {}", clientPlayName, stream);
             return;
         }
+
         if(!clientPlayName.equals(playName)) {
             playName = clientPlayName;                        
             final RtmpReader reader = application.getReader(playName);

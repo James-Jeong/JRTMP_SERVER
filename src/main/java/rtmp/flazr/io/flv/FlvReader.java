@@ -38,8 +38,8 @@ public class FlvReader implements RtmpReader {
     private final Metadata metadata;
     private int aggregateDuration;
 
-	private int width;
-	private int height;    
+	private final int width;
+	private final int height;
 
     public FlvReader(final String path) {
         in = new FileChannelReader(path);
@@ -73,16 +73,14 @@ public class FlvReader implements RtmpReader {
         do {
         	firstFrame = next();
         } while (!firstFrame.getHeader().isVideo() && hasNext());
-        
-        if (firstFrame != null) {
-	        Video video = new Video(firstFrame.getHeader(), firstFrame.encode());
-	        width = video.getWidth();
-	        height = video.getHeight();
-	        metadata.setValue("width", width);
-	        metadata.setValue("height", height);
-	        // rewind
-	        seek(0);
-        }
+
+        Video video = new Video(firstFrame.getHeader(), firstFrame.encode());
+        width = video.getWidth();
+        height = video.getHeight();
+        metadata.setValue("width", width);
+        metadata.setValue("height", height);
+        // rewind
+        seek(0);
     }
 
     @Override
@@ -117,10 +115,7 @@ public class FlvReader implements RtmpReader {
 
     private static boolean isSyncFrame(final RtmpMessage message) {
         final byte firstByte = message.encode().getByte(0);
-        if((firstByte & 0xF0) == 0x10) {
-            return true;
-        }
-        return false;
+        return (firstByte & 0xF0) == 0x10;
     }
 
     @Override

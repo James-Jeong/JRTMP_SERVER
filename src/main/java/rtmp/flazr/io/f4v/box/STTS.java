@@ -71,8 +71,7 @@ public class STTS implements Payload {
             final STTSRecord record = new STTSRecord();
             record.sampleCount = in.readInt();
             record.sampleDuration = in.readInt();
-            logger.debug("#{} sampleCount: {} sampleDuration: {}",
-                    new Object[]{i, record.sampleCount, record.sampleDuration});
+            logger.debug("#{} sampleCount: {} sampleDuration: {}", i, record.sampleCount, record.sampleDuration);
             records.add(record);
         }
     }

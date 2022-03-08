@@ -31,7 +31,7 @@ import java.util.List;
 
 public class ServerStream {
 
-    public static enum PublishType {
+    public enum PublishType {
 
         LIVE,
         APPEND,
@@ -104,14 +104,12 @@ public class ServerStream {
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder();        
-        sb.append("[name: '").append(name);
-        sb.append("' type: ").append(publishType);
-        sb.append(" publisher: ").append(publisher);
-        sb.append(" subscribers: ").append(subscribers);
-        sb.append(" config: ").append(configMessages);
-        sb.append(']');
-        return sb.toString();
+        return "[name: '" + name +
+                "' type: " + publishType +
+                " publisher: " + publisher +
+                " subscribers: " + subscribers +
+                " config: " + configMessages +
+                ']';
     }
 
 }

@@ -81,16 +81,17 @@ public class TKHD implements Payload {
         volume = in.readShort();
         reserved3 = in.readShort();
         logger.debug("creationTime {} modificationTime {} trackId {} duration {} layer {} volume {}",
-                new Object[]{creationTime, modificationTime, trackId, duration, layer, volume});
+                creationTime, modificationTime, trackId, duration, layer, volume
+        );
 
         transformMatrix = new int[9];
         for (int i = 0; i < transformMatrix.length; i++) {
             transformMatrix[i] = in.readInt();
-            logger.debug("transform matrix[{}]: {}", new Object[]{i, transformMatrix[i]});
+            logger.debug("transform matrix[{}]: {}", i, transformMatrix[i]);
         }
         width = in.readInt();
         height = in.readInt();
-        logger.debug("width {} height {}", new Object[]{width, height});
+        logger.debug("width {} height {}", width, height);
     }
 
     @Override

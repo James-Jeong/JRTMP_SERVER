@@ -82,7 +82,8 @@ public class MVHD implements Payload {
         playbackRate = in.readInt();
         volume = in.readShort();
         logger.debug("creationTime {} modificationTime {} timeScale {} duration {} playbackRate {} volume {}",
-                new Object[]{creationTime, modificationTime, timeScale, duration, playbackRate, volume});
+                creationTime, modificationTime, timeScale, duration, playbackRate, volume
+        );
         reserved1 = in.readShort();
         reserved2 = new int[2];
         reserved2[0] = in.readInt();
@@ -90,7 +91,7 @@ public class MVHD implements Payload {
         transformMatrix = new int[9];
         for (int i = 0; i < transformMatrix.length; i++) {
             transformMatrix[i] = in.readInt();
-            logger.debug("transform matrix[{}]: {}", new Object[]{i, transformMatrix[i]});
+            logger.debug("transform matrix[{}]: {}", i, transformMatrix[i]);
         }
         reserved3 = new int[6];
         for (int i = 0; i < reserved3.length; i++) {

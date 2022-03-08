@@ -205,7 +205,7 @@ public class Amf0Value {
             	} catch(Exception e) {
                 	logger.error("Exception while decoding a message from type {}: {}", type, e.toString());
                 	in.clear();
-                	decodedString = new String();
+                	decodedString = "";
             	}
             	return decodedString;
             case ARRAY:
