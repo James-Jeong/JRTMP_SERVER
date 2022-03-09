@@ -266,6 +266,19 @@
                             <filemode>755</filemode>
                         </mapping>
 
+                        <mapping>
+                            <configuration>noreplace</configuration>
+                            <directory>/home/uangel/urtmp_server/auth/</directory>
+                            <sources>
+                                <source>
+                                    <location>${project.basedir}/src/main/resources/auth/whitelist.txt</location>
+                                </source>
+                                <source>
+                                    <location>${project.basedir}/src/main/resources/auth/blacklist.txt</location>
+                                </source>
+                            </sources>
+                        </mapping>
+
                     </mappings>
                 </configuration>
             </plugin>

@@ -36,9 +36,8 @@ public class HaHandler extends Job {
         String cpuUsageStr = systemManager.getCpuUsage();
         String memoryUsageStr = systemManager.getHeapMemoryUsage();
 
-        logger.debug("| cpu=[{}], mem=[{}], thread=[{}] | RtmpRegUnitCount=[{}], RtmpPubUnitCount=[{}]",
+        logger.debug("| cpu=[{}], mem=[{}], thread=[{}] | RtmpPubUnitCount=[{}]",
                 cpuUsageStr, memoryUsageStr, Thread.activeCount(),
-                RtmpManager.getInstance().getRtmpRegisterManager().getRtmpRegUnitMapSize(),
                 RtmpManager.getInstance().getRtmpPubUnitMapSize()
         );
     }

@@ -42,14 +42,14 @@ import java.util.List;
 public class ServerHandler extends SimpleChannelHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(ServerHandler.class);
-    //
-    private int bytesReadWindow = 150000;
-    //private int bytesReadWindow = 15000;
+
+    private final int bytesReadWindow = 150000;
+    //private int bytesReadWindow = 250000;
+    private final int bytesWrittenWindow = 150000;
+    //private int bytesWrittenWindow = 250000;
     private long bytesRead;
     private long bytesReadLastSent;
     private long bytesWritten;
-    //private int bytesWrittenWindow = 15000;
-    private int bytesWrittenWindow = 150000;
     private ServerApplication application;
     private String clientId;
     private String playName;
@@ -59,14 +59,12 @@ public class ServerHandler extends SimpleChannelHandler {
     private ServerStream subscriberStream;
     private RtmpWriter recorder;
     private boolean aggregateModeEnabled = true;
-    //
     private String remoteHost;
     private int remotePort;
     private Date createTime;
     private String tcURL;
-    //
     private Channel channel;
-    //
+
     public void setAggregateModeEnabled(boolean aggregateModeEnabled) {
         this.aggregateModeEnabled = aggregateModeEnabled;
     }
@@ -125,7 +123,6 @@ public class ServerHandler extends SimpleChannelHandler {
         return recorder;
     }
 
-    //--------------------------------------------------------------------------
     @Override
     public void channelOpen(final ChannelHandlerContext ctx, final ChannelStateEvent e) {
         logger.info("opened channel: {}", e);
@@ -152,11 +149,11 @@ public class ServerHandler extends SimpleChannelHandler {
         }
         unpublishIfLive();
     }
-    //
+
     public void close(){
         channel.close();
     }
-    //
+
     @Override
     public void writeComplete(final ChannelHandlerContext ctx, final WriteCompletionEvent e) throws Exception {
         bytesWritten += e.getWrittenAmount();
@@ -184,16 +181,14 @@ public class ServerHandler extends SimpleChannelHandler {
                 break;
             case CONTROL:
                 final Control control = (Control) message;
-                switch(control.getType()) {
-                    case SET_BUFFER:
-                        logger.debug("received set buffer: {}", control);
-                        bufferDuration = control.getBufferLength();
-                        if(publisher != null) {
-                            publisher.setBufferDuration(bufferDuration);
-                        }
-                        break;
-                    default:
-                        logger.info("ignored control: {}", control);
+                if (control.getType() == Control.Type.SET_BUFFER) {
+                    logger.debug("received set buffer: {}", control);
+                    bufferDuration = control.getBufferLength();
+                    if (publisher != null) {
+                        publisher.setBufferDuration(bufferDuration);
+                    }
+                } else {
+                    logger.info("ignored control: {}", control);
                 }
                 break;
             case COMMAND_AMF0:
@@ -292,7 +287,6 @@ public class ServerHandler extends SimpleChannelHandler {
         }
     }
 
-    //==========================================================================
 
     private RtmpMessage[] getStartMessages(final RtmpMessage variation) {
         final List<RtmpMessage> list = new ArrayList<RtmpMessage>();
@@ -323,14 +317,13 @@ public class ServerHandler extends SimpleChannelHandler {
         channel.write(message);
     }
 
-    //==========================================================================
-
     private void connectResponse(final Channel channel, final Command connect) {
         Amf0Object obj = connect.getObject();
         final String appName = (String) obj.get("app");
         final String tcUrl = (String) obj.get("tcUrl");
         final Double objectEncoding = (Double)obj.get("objectEncoding");
-        this.tcURL=tcUrl;
+        this.tcURL = tcUrl;
+
         //only support amf0
         if(objectEncoding != null && objectEncoding != 0){
             throw new RuntimeException("not support object encoding:" + objectEncoding);
@@ -339,7 +332,7 @@ public class ServerHandler extends SimpleChannelHandler {
         clientId = channel.getId() + "";
         application = RtmpServer.getApplication(appName); // TODO auth, validation
         logger.info("connect, client id: {}, application: {}", clientId, application);
-        //
+
         channel.write(new WindowAckSize(bytesWrittenWindow));
         channel.write(SetPeerBw.dynamic(bytesReadWindow));
         channel.write(Control.streamBegin(streamId));
@@ -348,60 +341,79 @@ public class ServerHandler extends SimpleChannelHandler {
         channel.write(Command.onBWDone());
     }
 
-    //
-    private void playResponse(final Channel channel, final Command play)throws Exception {
+    private void playResponse(final Channel channel, final Command play) {
         int playStart = -2;
         int playLength = -1;
-        if(play.getArgCount() > 1) {
+        if (play.getArgCount() > 1) {
             playStart = ((Double) play.getArg(1)).intValue();
         }
-        if(play.getArgCount() > 2) {
+        if (play.getArgCount() > 2) {
             playLength = ((Double) play.getArg(2)).intValue();
         }
+
         final boolean playReset;
-        if(play.getArgCount() > 3) {
+        if (play.getArgCount() > 3) {
             playReset = ((Boolean) play.getArg(3));
         } else {
             playReset = true;
         }
+
         final Command playResetCommand = playReset ? Command.playReset(playName, clientId) : null;
         final String clientPlayName = (String) play.getArg(0);
+
+        /////////////////////////////
+        // CHECK STREAM NAME (KEY)
+        // 화이트 리스트에 없거나 블랙 리스트에 있으면 거부
+        if (!checkStreamKey(clientPlayName)) {
+            channel.write(Command.playFailed(clientPlayName, clientId));
+            logger.warn("[ServerHandler] [FAIL TO PLAY] <DENIED> UNKNOWN STREAM KEY: [{}]", clientPlayName);
+            return;
+        }
+        /////////////////////////////
+
         final ServerStream stream = application.getStream(clientPlayName);
         logger.debug("play name {}, start {}, length {}, reset {}",
-                clientPlayName, playStart, playLength, playReset);
-        //
+                clientPlayName, playStart, playLength, playReset
+        );
 
         if(stream.isLive()) {
-            for(final RtmpMessage message : getStartMessages(playResetCommand)) {
+            for (final RtmpMessage message : getStartMessages(playResetCommand)) {
                 writeToStream(channel, message);
             }
+
             boolean videoConfigPresent = false;
-            for(RtmpMessage message : stream.getConfigMessages()) {
+            for (RtmpMessage message : stream.getConfigMessages()) {
                 logger.info("writing start meta / config: {}", message);
-                if(message.getHeader().isVideo()) {
+
+                if (message.getHeader().isVideo()) {
                     videoConfigPresent = true;
                 }
+
                 writeToStream(channel, message);
             }
-            if(!videoConfigPresent) {
+
+            if (!videoConfigPresent) {
                 writeToStream(channel, Video.empty());
             }
+
             stream.getSubscribers().add(channel);
             logger.info("client requested live stream: {}, added to stream: {}", clientPlayName, stream);
             return;
         }
-        //
-        if(!clientPlayName.equals(playName)) {
+
+        if (!clientPlayName.equals(playName)) {
             playName = clientPlayName;
+
             final RtmpReader reader = application.getReader(playName);
             if(reader == null) {
                 channel.write(Command.playFailed(playName, clientId));
                 return;
             }
+
             publisher = new RtmpPublisher(reader, streamId, bufferDuration, true, aggregateModeEnabled) {
                 @Override protected RtmpMessage[] getStopMessages(long timePosition) {
                     return new RtmpMessage[] {
-                            Metadata.onPlayStatus(timePosition / 1000, bytesWritten),
+                            Metadata.onPlayStatus((double) timePosition / 1000, bytesWritten),
                             Command.playStop(playName, clientId),
                             Control.streamEof(streamId)
                     };
@@ -412,13 +424,15 @@ public class ServerHandler extends SimpleChannelHandler {
     }
 
     private void pauseResponse(final Channel channel, final Command command) {
-        if(publisher == null) {
+        if (publisher == null) {
             logger.debug("cannot pause when live");
             return;
         }
+
         final boolean paused = ((Boolean) command.getArg(0));
         final int clientTimePosition = ((Double) command.getArg(1)).intValue();
         logger.debug("pause request: {}, client time position: {}", paused, clientTimePosition);
+
         if(!paused) {
             logger.debug("doing unpause, seeking and playing");
             final Command unpause = Command.unpauseNotify(playName, clientId);
@@ -428,12 +442,12 @@ public class ServerHandler extends SimpleChannelHandler {
         }
     }
 
-    //
     private void seekResponse(final Channel channel, final Command command) {
         if(publisher == null) {
             logger.debug("cannot seek when live");
             return;
         }
+
         final int clientTimePosition = ((Double) command.getArg(0)).intValue();
         if (!publisher.isPaused()) {
             final Command seekNotify = Command.seekNotify(streamId, clientTimePosition, playName, clientId);
@@ -443,17 +457,27 @@ public class ServerHandler extends SimpleChannelHandler {
         }
     }
 
-    //
     private void publishResponse(final Channel channel, final Command command) {
         if(command.getArgCount() > 1) { // publish
-            final String streamName = (String) command.getArg(0);
+            final String streamKey = (String) command.getArg(0);
             final String publishTypeString = (String) command.getArg(1);
-            logger.info("publish, stream name: {}, type: {}", streamName, publishTypeString);
+            logger.info("publish, stream key: {}, type: {}", streamKey, publishTypeString);
 
             /////////////////////////////
+            // CHECK STREAM NAME (KEY)
+            // 화이트 리스트에 없거나 블랙 리스트에 있으면 거부
+            if (!checkStreamKey(streamKey)) {
+                unpublishIfLive();
+                logger.warn("[ServerHandler] [FAIL TO PUBLISH] <DENIED> UNKNOWN STREAM KEY: [{}]", streamKey);
+                return;
+            }
+            /////////////////////////////
+
+            /////////////////////////////
+            // ADD A NEW RTMP UNIT
             RtmpPubUnit rtmpUnit = RtmpManager.getInstance().addRtmpPubUnit(streamId);
             if (rtmpUnit != null) {
-                rtmpUnit.setStreamName(streamName);
+                rtmpUnit.setStreamName(streamKey);
                 rtmpUnit.setPublishTypeString(publishTypeString);
                 logger.debug("[ServerHandler] Success to add the rtmp unit.");
             } else {
@@ -461,7 +485,7 @@ public class ServerHandler extends SimpleChannelHandler {
             }
             /////////////////////////////
 
-            subscriberStream = application.getStream(streamName, publishTypeString);
+            subscriberStream = application.getStream(streamKey, publishTypeString);
             if(subscriberStream.getPublisher() != null) {
                 logger.info("disconnecting publisher client, stream already in use");
                 ChannelFuture future = channel.write(Command.publishBadName(streamId));
@@ -469,7 +493,7 @@ public class ServerHandler extends SimpleChannelHandler {
                 return;
             }
             subscriberStream.setPublisher(channel);
-            channel.write(Command.publishStart(streamName, clientId, streamId));
+            channel.write(Command.publishStart(streamKey, clientId, streamId));
             channel.write(new ChunkSize(4096));
             channel.write(Control.streamBegin(streamId));
             final ServerStream.PublishType publishType = subscriberStream.getPublishType();
@@ -484,7 +508,7 @@ public class ServerHandler extends SimpleChannelHandler {
                     writeToStream(subscribers, Metadata.dataStart());
                     break;
                 case RECORD:
-                    recorder = application.getWriter(streamName);
+                    recorder = application.getWriter(streamKey);
                     break;
                 case APPEND:
                     logger.warn("append not implemented yet, un-publishing...");
@@ -520,11 +544,24 @@ public class ServerHandler extends SimpleChannelHandler {
             }
             subscriberStream.getSubscribers().write(Command.unpublishNotify(streamId));
             subscriberStream.setPublisher(null);
+
+            /////////////////////////////
+            RtmpManager.getInstance().deleteRtmpPubUnit(streamId);
+            StreamIdResourceManager.getInstance().restoreStreamId(streamId);
+            /////////////////////////////
+
             logger.debug("publisher disconnected, stream un-published");
         }
         if(recorder != null) {
             recorder.close();
             recorder = null;
         }
+    }
+
+    private boolean checkStreamKey(String streamKey) {
+        // CHECK STREAM NAME (KEY)
+        // 화이트 리스트에 없거나 블랙 리스트에 있으면 거부
+        return RtmpManager.getInstance().getWhitelist().contains(streamKey)
+                && !RtmpManager.getInstance().getBlacklist().contains(streamKey);
     }
 }
