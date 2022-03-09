@@ -43,10 +43,10 @@ public class ServerHandler extends SimpleChannelHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(ServerHandler.class);
 
-    private final int bytesReadWindow = 150000;
-    //private int bytesReadWindow = 250000;
-    private final int bytesWrittenWindow = 150000;
-    //private int bytesWrittenWindow = 250000;
+    //private final int bytesReadWindow = 150000;
+    private final int bytesReadWindow = 250000;
+    //private final int bytesWrittenWindow = 150000;
+    private final int bytesWrittenWindow = 250000;
     private long bytesRead;
     private long bytesReadLastSent;
     private long bytesWritten;
@@ -67,46 +67,6 @@ public class ServerHandler extends SimpleChannelHandler {
 
     public void setAggregateModeEnabled(boolean aggregateModeEnabled) {
         this.aggregateModeEnabled = aggregateModeEnabled;
-    }
-
-    public int getBytesReadWindow() {
-        return bytesReadWindow;
-    }
-    public long getBytesRead() {
-        return bytesRead;
-    }
-    public long getBytesWritten() {
-        return bytesWritten;
-    }
-    public int getBytesWrittenWindow() {
-        return bytesWrittenWindow;
-    }
-    public ServerApplication getApplication() {
-        return application;
-    }
-    public String getClientId() {
-        return clientId;
-    }
-    public String getPlayName() {
-        return playName;
-    }
-    public int getStreamId() {
-        return streamId;
-    }
-    public int getBufferDuration() {
-        return bufferDuration;
-    }
-    public String getRemoteHost() {
-        return remoteHost;
-    }
-    public int getRemotePort() {
-        return remotePort;
-    }
-    public Date getCreateTime(){
-        return createTime;
-    }
-    public String getTcURL(){
-        return tcURL;
     }
 
     /**
@@ -169,9 +129,9 @@ public class ServerHandler extends SimpleChannelHandler {
         final RtmpMessage message = (RtmpMessage) me.getMessage();
         bytesRead += message.getHeader().getSize();
         if((bytesRead - bytesReadLastSent) > bytesReadWindow) {
-            if(logger.isDebugEnabled()){
+            /*if(logger.isDebugEnabled()){
                 logger.debug("sending bytes read ack after: {}", bytesRead);
-            }
+            }*/
             BytesRead ack = new BytesRead(bytesRead);
             channel.write(ack);
             bytesReadLastSent = bytesRead;
@@ -259,9 +219,9 @@ public class ServerHandler extends SimpleChannelHandler {
             case BYTES_READ:
                 final BytesRead bytesReadByClient = (BytesRead) message;
                 long byteRead=bytesReadByClient.getValue();
-                if(logger.isDebugEnabled()){
+                /*if(logger.isDebugEnabled()){
                     logger.debug("client bytes read:{}",byteRead);
-                }
+                }*/
                 break;
             case WINDOW_ACK_SIZE:
                 WindowAckSize was = (WindowAckSize) message;
