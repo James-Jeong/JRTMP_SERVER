@@ -80,6 +80,7 @@ public class RtmpManager {
 
     public void stop() {
         rtmpRegisterManager.removeRegisterChannel();
+        StreamIdResourceManager.getInstance().releaseResource();
 
         deleteAllRtmpPubUnits();
 

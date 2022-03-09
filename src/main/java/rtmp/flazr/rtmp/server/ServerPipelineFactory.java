@@ -33,8 +33,6 @@ public class ServerPipelineFactory implements ChannelPipelineFactory {
         pipeline.addLast("handshaker", new ServerHandshakeHandler());
         pipeline.addLast("decoder", new RtmpDecoder());
         pipeline.addLast("encoder", new RtmpEncoder());
-//        pipeline.addLast("executor", new ExecutionHandler(
-//                new OrderedMemoryAwareThreadPoolExecutor(16, 1048576, 1048576)));
         pipeline.addLast("handler", new ServerHandler());
         return pipeline;
     }

@@ -31,6 +31,7 @@ import org.jboss.netty.util.HashedWheelTimer;
 import org.jboss.netty.util.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import rtmp.flazr.util.Utils;
 
 import java.net.InetSocketAddress;
 import java.util.Map;
@@ -52,6 +53,16 @@ public class RtmpServer {
     protected static final ChannelGroup CHANNELS;
     protected static final Map<String, ServerApplication> APPLICATIONS;
     public static final Timer TIMER;
+
+    static ServerApplication getApplication(final String rawName) {
+        final String appName = Utils.trimSlashes(rawName).toLowerCase();
+        ServerApplication app = RtmpServer.APPLICATIONS.get(appName);
+        if (app == null) {
+            app = new ServerApplication(appName);
+            RtmpServer.APPLICATIONS.put(appName, app);
+        }
+        return app;
+    }
 
     public static void main(String[] args) throws Exception {
 
