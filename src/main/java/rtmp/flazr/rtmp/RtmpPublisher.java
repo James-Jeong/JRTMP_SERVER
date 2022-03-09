@@ -42,7 +42,7 @@ public abstract class RtmpPublisher {
     private final boolean aggregateModeEnabled;
 
     private final RtmpReader reader;
-    private final int streamId;
+    private int streamId;
     private long startTime;
     private long seekTime;
     private long timePosition;
@@ -51,37 +51,75 @@ public abstract class RtmpPublisher {
     private boolean paused;
     private int bufferDuration;
 
-    public Channel channel;
-    private int channelId = 8;
-
-    public static class Event {
-
-        private final int conversationId;
-        private final int streamId;
-
-        public Event(final int conversationId, final int streamId) {
-            this.conversationId = conversationId;
-            this.streamId = streamId;
-        }
-
-        public int getConversationId() {
-            return conversationId;
-        }
-
-        public int getStreamId() {
-            return streamId;
-        }
+    /**
+     * @return the timerTickSize
+     */
+    public int getTimerTickSize() {
+        return timerTickSize;
     }
 
+    /**
+     * @return the aggregateModeEnabled
+     */
+    public boolean isAggregateModeEnabled() {
+        return aggregateModeEnabled;
+    }
+
+    /**
+     * @return the streamId
+     */
+    public int getStreamId() {
+        return streamId;
+    }
+
+    /**
+     * @return the startTime
+     */
+    public long getStartTime() {
+        return startTime;
+    }
+
+    /**
+     * @return the seekTime
+     */
+    public long getSeekTime() {
+        return seekTime;
+    }
+
+    /**
+     * @return the timePosition
+     */
+    public long getTimePosition() {
+        return timePosition;
+    }
+
+    /**
+     * @return the currentConversationId
+     */
+    public int getCurrentConversationId() {
+        return currentConversationId;
+    }
+
+    /**
+     * @return the playLength
+     */
+    public int getPlayLength() {
+        return playLength;
+    }
+
+    /**
+     * @return the bufferDuration
+     */
+    public int getBufferDuration() {
+        return bufferDuration;
+    }
+
+    //
     public RtmpPublisher(final RtmpReader reader, final int streamId, final int bufferDuration,
                          boolean useSharedTimer, boolean aggregateModeEnabled) {
         this.aggregateModeEnabled = aggregateModeEnabled;
         this.usingSharedTimer = useSharedTimer;
-        if(useSharedTimer) {
-            timer = RtmpServer.TIMER;
-        } else {
-            timer = new HashedWheelTimer(RtmpConfig.TIMER_TICK_SIZE, TimeUnit.MILLISECONDS);
-        }
+        timer = new HashedWheelTimer(RtmpConfig.TIMER_TICK_SIZE, TimeUnit.MILLISECONDS);
         timerTickSize = RtmpConfig.TIMER_TICK_SIZE;
         this.reader = reader;
         this.streamId = streamId;
@@ -114,9 +152,6 @@ public abstract class RtmpPublisher {
     public boolean handle(final MessageEvent me) {
         if(me.getMessage() instanceof Event) {
             final Event pe = (Event) me.getMessage();
-            if(pe.streamId != streamId) {
-                return false;
-            }
             if(pe.conversationId != currentConversationId) {
                 logger.debug("stopping obsolete conversation id: {}, current: {}",
                         pe.getConversationId(), currentConversationId);
@@ -129,7 +164,6 @@ public abstract class RtmpPublisher {
     }
 
     public void start(final Channel channel, final int seekTime, final int playLength, final RtmpMessage ... messages) {
-        this.channel = channel;
         this.playLength = playLength;
         start(channel, seekTime, messages);
     }
@@ -145,8 +179,7 @@ public abstract class RtmpPublisher {
         }
         timePosition = seekTime;
         logger.debug("publish start, seek requested: {} actual seek: {}, play length: {}, conversation: {}",
-                seekTimeRequested, seekTime, playLength, currentConversationId
-        );
+                new Object[]{seekTimeRequested, seekTime, playLength, currentConversationId});
         for(final RtmpMessage message : messages) {
             writeToStream(channel, message);
         }
@@ -156,7 +189,7 @@ public abstract class RtmpPublisher {
         write(channel);
     }
 
-    public void writeToStream(final Channel channel, final RtmpMessage message) {
+    private void writeToStream(final Channel channel, final RtmpMessage message) {
         if(message.getHeader().getChannelId() > 2) {
             message.getHeader().setStreamId(streamId);
             message.getHeader().setTime((int) timePosition);
@@ -194,35 +227,37 @@ public abstract class RtmpPublisher {
         final long delay = (long) ((header.getTime() - timePosition) * compensationFactor);
         if(logger.isDebugEnabled()) {
             logger.debug("elapsed: {}, streamed: {}, buffer: {}, factor: {}, delay: {}",
-                    elapsedTimePlusSeek, timePosition, clientBuffer, compensationFactor, delay
-            );
+                    new Object[]{elapsedTimePlusSeek, timePosition, clientBuffer, compensationFactor, delay});
         }
         timePosition = header.getTime();
         header.setStreamId(streamId);
-        header.setChannelId(channelId);
         final ChannelFuture future = channel.write(message);
-        future.addListener(cf -> {
-            final long completedIn = System.currentTimeMillis() - writeTime;
-            if(completedIn > 2000) {
-                logger.warn("channel busy? time taken to write last message: {}", completedIn);
+        future.addListener(new ChannelFutureListener() {
+            @Override public void operationComplete(final ChannelFuture cf) {
+                final long completedIn = System.currentTimeMillis() - writeTime;
+                if(completedIn > 2000) {
+                    logger.warn("channel busy? time taken to write last message: {}", completedIn);
+                }
+                final long delayToUse = clientBuffer > 0 ? delay - completedIn : 0;
+                fireNext(channel, delayToUse);
             }
-            final long delayToUse = clientBuffer > 0 ? delay - completedIn : 0;
-            fireNext(channel, delayToUse);
         });
     }
 
     public void fireNext(final Channel channel, final long delay) {
-        final Event readyForNext = new Event(currentConversationId, streamId);
+        final Event readyForNext = new Event(currentConversationId);
         if(delay > timerTickSize) {
-            timer.newTimeout(timeout -> {
-                if(logger.isDebugEnabled()) {
-                    logger.debug("running after delay: {}", delay);
+            timer.newTimeout(new TimerTask() {
+                @Override public void run(Timeout timeout) {
+                    if(logger.isDebugEnabled()) {
+                        logger.debug("running after delay: {}", delay);
+                    }
+                    if(readyForNext.conversationId != currentConversationId) {
+                        logger.debug("pending 'next' event found obsolete, aborting");
+                        return;
+                    }
+                    Channels.fireMessageReceived(channel, readyForNext);
                 }
-                if(readyForNext.conversationId != currentConversationId) {
-                    logger.debug("pending 'next' event found obsolete, aborting");
-                    return;
-                }
-                Channels.fireMessageReceived(channel, readyForNext);
             }, delay, TimeUnit.MILLISECONDS);
         } else {
             Channels.fireMessageReceived(channel, readyForNext);
@@ -238,8 +273,7 @@ public abstract class RtmpPublisher {
         currentConversationId++;
         final long elapsedTime = System.currentTimeMillis() - startTime;
         logger.info("finished, start: {}, elapsed {}, streamed: {}",
-                seekTime / 1000, elapsedTime / 1000, (timePosition - seekTime) / 1000
-        );
+                new Object[]{seekTime / 1000, elapsedTime / 1000, (timePosition - seekTime) / 1000});
         for(RtmpMessage message : getStopMessages(timePosition)) {
             writeToStream(channel, message);
         }
@@ -253,9 +287,21 @@ public abstract class RtmpPublisher {
     }
 
     protected abstract RtmpMessage[] getStopMessages(long timePosition);
+    /**
+     *
+     * @author yama
+     *
+     */
+    public static class Event {
+        private final int conversationId;
 
-    public void setChannelId(int channelId) {
-        this.channelId  = channelId;
+        public Event(final int conversationId) {
+            this.conversationId = conversationId;
+        }
+
+        public int getConversationId() {
+            return conversationId;
+        }
+
     }
-
 }

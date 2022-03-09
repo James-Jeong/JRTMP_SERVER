@@ -36,7 +36,7 @@ public class Aggregate extends DataMessage {
     }
 
     @Override
-    public MessageType getMessageType() {
+    protected MessageType getMessageType() {
         return MessageType.AGGREGATE;
     }
 

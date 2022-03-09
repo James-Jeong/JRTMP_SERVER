@@ -32,33 +32,19 @@ import org.slf4j.LoggerFactory;
 public class FlvReader implements RtmpReader {
 
     private static final Logger logger = LoggerFactory.getLogger(FlvReader.class);
-    
+
     private final BufferReader in;
     private final long mediaStartPosition;
     private final Metadata metadata;
     private int aggregateDuration;
 
-	private final int width;
-	private final int height;
-
     public FlvReader(final String path) {
         in = new FileChannelReader(path);
         in.position(13); // skip flv header
-        
         final RtmpMessage metadataAtom = next();
-
-        /* TODO: block added to ignore an exception caused probably due to a new message in flv/rtmp
-                 that is not treated by flazr */
-        /*final*/ RtmpMessage metadataTemp = null;
-        try {
-            metadataTemp = MessageType.decode(metadataAtom.getHeader(), metadataAtom.encode());
-        } catch (Exception e) {
-            if (e.getMessage().equals("bad value / byte: 101 (hex: 65), java.lang.ArrayIndexOutOfBoundsException: 101")) {
-                logger.debug("Ignoring malformed metadata (bad value / byte: 101 (hex: 65))");
-            }
-        }
-
-        if(metadataTemp != null && metadataTemp.getHeader().isMetadata()) {
+        final RtmpMessage metadataTemp =
+                MessageType.decode(metadataAtom.getHeader(), metadataAtom.encode());
+        if(metadataTemp.getHeader().isMetadata()) {
             metadata = (Metadata) metadataTemp;
             mediaStartPosition = in.position();
         } else {
@@ -68,19 +54,6 @@ public class FlvReader implements RtmpReader {
             mediaStartPosition = 13;
         }
         logger.debug("flv file metadata: {}", metadata);
-        
-        RtmpMessage firstFrame;
-        do {
-        	firstFrame = next();
-        } while (!firstFrame.getHeader().isVideo() && hasNext());
-
-        Video video = new Video(firstFrame.getHeader(), firstFrame.encode());
-        width = video.getWidth();
-        height = video.getHeight();
-        metadata.setValue("width", width);
-        metadata.setValue("height", height);
-        // rewind
-        seek(0);
     }
 
     @Override
@@ -115,7 +88,10 @@ public class FlvReader implements RtmpReader {
 
     private static boolean isSyncFrame(final RtmpMessage message) {
         final byte firstByte = message.encode().getByte(0);
-        return (firstByte & 0xF0) == 0x10;
+        if((firstByte & 0xF0) == 0x10) {
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -129,11 +105,11 @@ public class FlvReader implements RtmpReader {
                 throw new RuntimeException(e);
             }
         }
-        final long start = getTimePosition();        
+        final long start = getTimePosition();
         if(time > start) {
             while(hasNext()) {
                 final RtmpMessage cursor = next();
-                if(cursor.getHeader().getTime() >= time) {                    
+                if(cursor.getHeader().getTime() >= time) {
                     break;
                 }
             }
@@ -166,16 +142,16 @@ public class FlvReader implements RtmpReader {
     }
 
     @Override
-    public boolean hasNext() {        
+    public boolean hasNext() {
         return in.position() < in.size();
     }
 
 
-    protected boolean hasPrev() {        
+    protected boolean hasPrev() {
         return in.position() > mediaStartPosition;
     }
 
-    protected RtmpMessage prev() {        
+    protected RtmpMessage prev() {
         final long oldPos = in.position();
         in.position(oldPos - 4);
         final long newPos = oldPos - 4 - in.readInt();
@@ -218,18 +194,8 @@ public class FlvReader implements RtmpReader {
         in.close();
     }
 
-    @Override
-    public int getWidth() {
-		return width;
-	}
-
-    @Override
-	public int getHeight() {
-		return height;
-	}
-
-	public static void main(String[] args) {
-        FlvReader reader = new FlvReader("/home/felipe/codes/mconf/bbbot/bot/etc/sample.flv");
+    public static void main(String[] args) {
+        FlvReader reader = new FlvReader("home/apps/vod/IronMan.flv");
         while(reader.hasNext()) {
             RtmpMessage message = reader.next();
             logger.debug("{} {}", message, ChannelBuffers.hexDump(message.encode()));

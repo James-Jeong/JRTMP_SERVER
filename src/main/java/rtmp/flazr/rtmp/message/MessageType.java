@@ -21,13 +21,11 @@ package rtmp.flazr.rtmp.message;
 
 import rtmp.flazr.rtmp.RtmpHeader;
 import rtmp.flazr.rtmp.RtmpMessage;
-import rtmp.flazr.util.ValueToEnum;
 import org.jboss.netty.buffer.ChannelBuffer;
-import rtmp.server.so.SharedObjectMessage;
+import rtmp.flazr.util.ValueToEnum;
 
 public enum MessageType implements ValueToEnum.IntValue {
-
-    CHUNK_SIZE(0x01),
+	CHUNK_SIZE(0x01),
     ABORT(0x02),
     BYTES_READ(0x03),
     CONTROL(0x04),
@@ -44,7 +42,7 @@ public enum MessageType implements ValueToEnum.IntValue {
     SHARED_OBJECT_AMF0(0x13),
     COMMAND_AMF0(0x14),
     AGGREGATE(0x16);
-
+  
     private final int value;
 
     private MessageType(final int value) {
@@ -65,8 +63,6 @@ public enum MessageType implements ValueToEnum.IntValue {
             case WINDOW_ACK_SIZE:
             case SET_PEER_BW:            
                 return 2;
-            case SHARED_OBJECT_AMF0:
-            case SHARED_OBJECT_AMF3:
             case COMMAND_AMF0:
             case COMMAND_AMF3: // TODO verify
                 return 3;
@@ -82,20 +78,17 @@ public enum MessageType implements ValueToEnum.IntValue {
 
     public static RtmpMessage decode(final RtmpHeader header, final ChannelBuffer in) {
         switch(header.getMessageType()) {
-            case ABORT: return new Abort(header, in);
-            case BYTES_READ: return new BytesRead(header, in);
-            case CHUNK_SIZE: return new ChunkSize(header, in);
-            case COMMAND_AMF0: return new CommandAmf0(header, in);
-            case METADATA_AMF0: return new MetadataAmf0(header, in);
-            case CONTROL: return new Control(header, in);
-            case WINDOW_ACK_SIZE: return new WindowAckSize(header, in);
-            case SET_PEER_BW: return new SetPeerBw(header, in);
-            case AUDIO: return new Audio(header, in);
-            case VIDEO: return new Video(header, in);
-            case AGGREGATE: return new Aggregate(header, in);
-            case SHARED_OBJECT_AMF0:
-            case SHARED_OBJECT_AMF3:
-            	return new SharedObjectMessage(header, in);
+            case ABORT: return new rtmp.flazr.rtmp.message.Abort(header, in);
+            case BYTES_READ: return new rtmp.flazr.rtmp.message.BytesRead(header, in);
+            case CHUNK_SIZE: return new rtmp.flazr.rtmp.message.ChunkSize(header, in);
+            case COMMAND_AMF0: return new rtmp.flazr.rtmp.message.CommandAmf0(header, in);
+            case METADATA_AMF0: return new rtmp.flazr.rtmp.message.MetadataAmf0(header, in);
+            case CONTROL: return new rtmp.flazr.rtmp.message.Control(header, in);
+            case WINDOW_ACK_SIZE: return new rtmp.flazr.rtmp.message.WindowAckSize(header, in);
+            case SET_PEER_BW: return new rtmp.flazr.rtmp.message.SetPeerBw(header, in);
+            case AUDIO: return new rtmp.flazr.rtmp.message.Audio(header, in);
+            case VIDEO: return new rtmp.flazr.rtmp.message.Video(header, in);
+            case AGGREGATE: return new rtmp.flazr.rtmp.message.Aggregate(header, in);
             default: throw new RuntimeException("unable to create message for: " + header);
         }
     }

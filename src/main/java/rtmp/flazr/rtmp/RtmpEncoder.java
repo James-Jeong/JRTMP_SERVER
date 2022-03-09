@@ -19,22 +19,21 @@
 
 package rtmp.flazr.rtmp;
 
-import rtmp.flazr.rtmp.message.ChunkSize;
-import rtmp.flazr.rtmp.message.Control;
-import rtmp.flazr.rtmp.message.MessageType;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import rtmp.flazr.rtmp.message.ChunkSize;
+import rtmp.flazr.rtmp.message.Control;
+import rtmp.flazr.rtmp.message.MessageType;
 
-@ChannelPipelineCoverage("one")
 public class RtmpEncoder extends SimpleChannelDownstreamHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(RtmpEncoder.class);
 
-    private int chunkSize = 128;    
-    private RtmpHeader[] channelPrevHeaders = new RtmpHeader[RtmpHeader.MAX_CHANNEL_ID];    
+    private int chunkSize = 128;
+    private RtmpHeader[] channelPrevHeaders = new RtmpHeader[RtmpHeader.MAX_CHANNEL_ID];
 
     private void clearPrevHeaders() {
         logger.debug("clearing prev stream headers");
@@ -42,7 +41,7 @@ public class RtmpEncoder extends SimpleChannelDownstreamHandler {
     }
 
     @Override
-    public void writeRequested(final ChannelHandlerContext ctx, final MessageEvent e) {        
+    public void writeRequested(final ChannelHandlerContext ctx, final MessageEvent e) {
         Channels.write(ctx, e.getFuture(), encode((RtmpMessage) e.getMessage()));
     }
 
@@ -61,7 +60,7 @@ public class RtmpEncoder extends SimpleChannelDownstreamHandler {
         }
         final int channelId = header.getChannelId();
         header.setSize(in.readableBytes());
-        final RtmpHeader prevHeader = channelPrevHeaders[channelId];       
+        final RtmpHeader prevHeader = channelPrevHeaders[channelId];
         if(prevHeader != null // first stream message is always large
                 && header.getStreamId() > 0 // all control messages always large
                 && header.getTime() > 0) { // if time is zero, always large
@@ -78,24 +77,22 @@ public class RtmpEncoder extends SimpleChannelDownstreamHandler {
                 header.setDeltaTime(deltaTime);
             }
         } else {
-			// otherwise force to LARGE
+            // otherwise force to LARGE
             header.setHeaderType(RtmpHeader.Type.LARGE);
         }
-        channelPrevHeaders[channelId] = header;        
-        if(logger.isTraceEnabled()) {
-        	// don't print millions of PING_RESPONSE
-        	if (message.getHeader().getMessageType() != MessageType.CONTROL || ((Control) message).getType() != Control.Type.PING_RESPONSE)
-        		logger.trace(">> {}", message);
-        }                
+        channelPrevHeaders[channelId] = header;
+        if(logger.isDebugEnabled()) {
+            //logger.debug(">> {}", message);
+        }
         final ChannelBuffer out = ChannelBuffers.buffer(
                 RtmpHeader.MAX_ENCODED_SIZE + header.getSize() + header.getSize() / chunkSize);
         boolean first = true;
         while(in.readable()) {
             final int size = Math.min(chunkSize, in.readableBytes());
-            if(first) {                
+            if(first) {
                 header.encode(out);
                 first = false;
-            } else {                
+            } else {
                 out.writeBytes(header.getTinyHeader());
             }
             in.readBytes(out, size);

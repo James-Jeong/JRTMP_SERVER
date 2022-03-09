@@ -23,6 +23,11 @@ import rtmp.flazr.rtmp.RtmpHeader;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 
+/**
+ * 
+ * @author yama
+ *
+ */
 public abstract class DataMessage extends AbstractMessage {
 
     private boolean encoded;
@@ -68,6 +73,6 @@ public abstract class DataMessage extends AbstractMessage {
         return super.toString() + ChannelBuffers.hexDump(data);
     }
 
-    public abstract boolean isConfig();
+    public abstract boolean isConfig(); // TODO abstraction for audio / video ?
 
 }

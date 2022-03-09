@@ -22,11 +22,11 @@ package rtmp.flazr.io.flv;
 import rtmp.flazr.io.BufferReader;
 import rtmp.flazr.rtmp.RtmpHeader;
 import rtmp.flazr.rtmp.RtmpMessage;
-import rtmp.flazr.rtmp.message.MessageType;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import rtmp.flazr.rtmp.message.MessageType;
 
 public class FlvAtom implements RtmpMessage {
 

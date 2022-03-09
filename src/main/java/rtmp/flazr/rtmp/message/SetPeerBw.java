@@ -19,10 +19,10 @@
 
 package rtmp.flazr.rtmp.message;
 
-import rtmp.flazr.rtmp.RtmpHeader;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
-
+import rtmp.flazr.rtmp.RtmpHeader;
+    
 public class SetPeerBw extends AbstractMessage {
 
     public static enum LimitType {
@@ -56,7 +56,7 @@ public class SetPeerBw extends AbstractMessage {
     }
 
     @Override
-    public MessageType getMessageType() {
+    protected MessageType getMessageType() {
         return MessageType.SET_PEER_BW;
     }
 

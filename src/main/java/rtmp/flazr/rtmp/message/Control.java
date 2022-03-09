@@ -20,17 +20,15 @@
 package rtmp.flazr.rtmp.message;
 
 import rtmp.flazr.rtmp.RtmpHeader;
-import rtmp.flazr.util.Utils;
-import rtmp.flazr.util.ValueToEnum;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import rtmp.flazr.util.Utils;
+import rtmp.flazr.util.ValueToEnum;
 
+/**
+ * 
+ */
 public class Control extends AbstractMessage {
-
-    @SuppressWarnings("unused")
-	private static final Logger logger = LoggerFactory.getLogger(Control.class);
 
     public static enum Type implements ValueToEnum.IntValue {
         
@@ -67,7 +65,7 @@ public class Control extends AbstractMessage {
 
     private Type type;
     private int streamId;
-	private int bufferLength;
+    private int bufferLength;
     private int time;
     private byte[] bytes;
 
@@ -86,7 +84,7 @@ public class Control extends AbstractMessage {
     }
 
     @Override
-    public MessageType getMessageType() {
+    protected MessageType getMessageType() {
         return MessageType.CONTROL;
     }
 
@@ -229,15 +227,13 @@ public class Control extends AbstractMessage {
             case PING_RESPONSE:
                 sb.append(" time: ").append(time);
                 break;
+		default:
+			break;
         }
         if(bytes != null) {
             sb.append(" bytes: " + Utils.toHex(bytes));
         }
         return sb.toString();
     }
-
-    public int getStreamId() {
-		return streamId;
-	}
 
 }

@@ -83,8 +83,7 @@ public class CTTS implements Payload {
         out.writeInt(0); // UI8 version + UI24 flags
         final int count = records.size();
         out.writeInt(count);
-        for (int i = 0; i < count; i++) {
-            final CTTSRecord record = records.get(i);
+        for (final CTTSRecord record : records) {
             out.writeInt(record.sampleCount);
             out.writeInt(record.sampleOffset);
         }

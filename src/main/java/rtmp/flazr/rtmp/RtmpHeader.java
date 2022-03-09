@@ -23,30 +23,23 @@ import rtmp.flazr.rtmp.message.MessageType;
 import rtmp.flazr.util.Utils;
 import rtmp.flazr.util.ValueToEnum;
 import org.jboss.netty.buffer.ChannelBuffer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class RtmpHeader {
-    
-    private static final Logger logger = LoggerFactory.getLogger(RtmpHeader.class);
 
-    public static enum Type implements ValueToEnum.IntValue {
-
+    public enum Type implements ValueToEnum.IntValue {
         LARGE(0), MEDIUM(1), SMALL(2), TINY(3);
-
         private final int value;
-
-        private Type(int value) {
-            this.value = value;            
+        Type(int value) {
+            this.value = value;
         }
-
+        //
         @Override
         public int intValue() {
             return value;
         }
-
+        //
         private static final ValueToEnum<Type> converter = new ValueToEnum<Type>(Type.values());
-
+        //
         public static Type valueToEnum(final int value) {
             return converter.valueToEnum(value);
         }
@@ -60,7 +53,7 @@ public class RtmpHeader {
     private Type headerType;
     private int channelId;
     private int deltaTime;
-    private int time;    
+    private int time;
     private int size;
     private MessageType messageType;
     private int streamId;
@@ -86,7 +79,7 @@ public class RtmpHeader {
         headerType = Type.valueToEnum(headerTypeInt);
         //========================= REMAINING HEADER ===========================
         final RtmpHeader prevHeader = incompleteHeaders[channelId];
-        // logger.debug("so far: {}, prev {}", this, prevHeader);
+
         switch(headerType) {
             case LARGE:
                 time = in.readMedium();
@@ -123,7 +116,7 @@ public class RtmpHeader {
                 messageType = prevHeader.messageType;
                 streamId = prevHeader.streamId;
                 break;
-        }        
+        }
     }
 
     public RtmpHeader(MessageType messageType, int time, int size) {
@@ -238,15 +231,15 @@ public class RtmpHeader {
         out.writeBytes(encodeHeaderTypeAndChannel(headerType.value, channelId));
         if(headerType == Type.TINY) {
             return;
-        }     
+        }
         final boolean extendedTime;
         if(headerType == Type.LARGE) {
-            extendedTime = time >= MAX_NORMAL_HEADER_TIME;             
+            extendedTime = time >= MAX_NORMAL_HEADER_TIME;
         } else {
             extendedTime = deltaTime >= MAX_NORMAL_HEADER_TIME;
         }
         if(extendedTime) {
-            out.writeMedium(MAX_NORMAL_HEADER_TIME); 
+            out.writeMedium(MAX_NORMAL_HEADER_TIME);
         } else {                                        // LARGE / MEDIUM / SMALL
             out.writeMedium(headerType == Type.LARGE ? time : deltaTime);
         }
@@ -271,9 +264,9 @@ public class RtmpHeader {
             return new byte[] {(byte) ((headerType << 6) + channelId)};
         } else if (channelId <= 320) {
             return new byte[] {(byte) (headerType << 6), (byte) (channelId - 64)};
-        } else {            
+        } else {
             return new byte[] {(byte) ((headerType << 6) | 1),
-                (byte) ((channelId - 64) & 0xff), (byte) ((channelId - 64) >> 8)};
+                    (byte) ((channelId - 64) & 0xff), (byte) ((channelId - 64) >> 8)};
         }
     }
 
@@ -282,8 +275,8 @@ public class RtmpHeader {
         StringBuilder sb = new StringBuilder();
         sb.append('[').append(headerType.ordinal());
         sb.append(' ').append(messageType);
-        sb.append(" c").append(channelId);        
-        sb.append(" #").append(streamId);        
+        sb.append(" c").append(channelId);
+        sb.append(" #").append(streamId);
         sb.append(" t").append(time);
         sb.append(" (").append(deltaTime);
         sb.append(") s").append(size);

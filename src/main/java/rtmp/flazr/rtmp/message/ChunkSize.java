@@ -36,7 +36,7 @@ public class ChunkSize extends AbstractMessage {
     }
 
     @Override
-    public MessageType getMessageType() {
+    protected MessageType getMessageType() {
         return MessageType.CHUNK_SIZE;
     }
 

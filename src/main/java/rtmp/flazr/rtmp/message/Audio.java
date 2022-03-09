@@ -23,8 +23,6 @@ import rtmp.flazr.rtmp.RtmpHeader;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 
-import java.nio.ByteOrder;
-
 public class Audio extends DataMessage {
 
     @Override
@@ -57,17 +55,8 @@ public class Audio extends DataMessage {
     }
 
     @Override
-    public MessageType getMessageType() {
+    protected MessageType getMessageType() {
         return MessageType.AUDIO;
     }
-    
-	public byte[] getByteArray() {
-		return data.toByteBuffer().array();
-	}
 
-	public short[] getShortArray() {
-		short[] shortArray = new short[data.array().length / 2];
-		data.toByteBuffer().order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(shortArray);
-		return shortArray;
-	}
 }

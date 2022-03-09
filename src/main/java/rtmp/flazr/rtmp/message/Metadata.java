@@ -22,12 +22,17 @@ package rtmp.flazr.rtmp.message;
 import rtmp.flazr.amf.Amf0Object;
 import rtmp.flazr.io.f4v.MovieInfo;
 import rtmp.flazr.io.f4v.TrackInfo;
-import rtmp.flazr.io.f4v.box.STSD.VideoSD;
+import rtmp.flazr.io.f4v.box.STSD;
 import rtmp.flazr.rtmp.RtmpHeader;
 import org.jboss.netty.buffer.ChannelBuffer;
 
 import java.util.*;
 
+/**
+ * 
+ * @author yama
+ *
+ */
 public abstract class Metadata extends AbstractMessage {
 
     protected String name;
@@ -58,23 +63,25 @@ public abstract class Metadata extends AbstractMessage {
         return map.get(key);
     }
 
-    public void setValue(String key, Object value) {
+    @SuppressWarnings("unchecked")
+	public void setValue(String key, Object value) {
         if(data == null || data.length == 0) {
             data = new Object[]{new LinkedHashMap<String, Object>()};
         }
         if(data[0] == null) {
             data[0] = new LinkedHashMap<String, Object>();
         }
-        final Map<String, Object> map = (Map) data[0];
+        final Map<String, Object> map = (Map<String, Object>) data[0];
         map.put(key, value);
     }
 
-    public Map<String, Object> getMap(int index) {
+    @SuppressWarnings("unchecked")
+	public Map<String, Object> getMap(int index) {
         return (Map<String, Object>) getData(index);
     }
 
     public String getString(String key) {
-        return (String) getValue(key);
+        return (String)getValue(key);
     }
 
     public Boolean getBoolean(String key) {
@@ -84,7 +91,22 @@ public abstract class Metadata extends AbstractMessage {
     public Double getDouble(String key) {
         return (Double) getValue(key);
     }
-
+    //
+    public String getInnerValue(String key){
+    	if(data == null || data.length == 1) {
+    		 return "null";
+        }
+        final Map<String, Object> map = getMap(1);
+        if(map == null) {
+            return "null";
+        }
+        final Object o = map.get(key);
+        if(o == null) {
+            return "null";
+        }
+        return o+"";
+    }
+    //
     public double getDuration() {
         if(data == null || data.length == 0) {
             return -1;
@@ -100,12 +122,13 @@ public abstract class Metadata extends AbstractMessage {
         return ((Double) o).longValue();
     }
 
-    public void setDuration(final double duration) {
+    @SuppressWarnings("unchecked")
+	public void setDuration(final double duration) {
         if(data == null || data.length == 0) {
             data = new Object[] {map(pair("duration", duration))};
         }
         final Object meta = data[0];
-        final Map<String, Object> map = (Map) meta;
+        final Map<String, Object> map = (Map<String, Object>) meta;
         if(map == null) {
             data[0] = map(pair("duration", duration));
             return;
@@ -134,6 +157,20 @@ public abstract class Metadata extends AbstractMessage {
     //==========================================================================
 
     /**
+     * 
+     *  videocodecid id
+     *  
+     *	H263:uint = 2;
+		SCREEN:uint = 3;
+		VP6:uint = 4;
+		VP6ALPHA:uint = 5;
+		SCREENV2:uint = 6;
+     	H264:uint = 7;
+    
+     * 
+     * 
+     * 
+     * 
     [ (map){
         duration=112.384, moovPosition=28.0, width=640.0, height=352.0, videocodecid=avc1,
         audiocodecid=mp4a, avcprofile=100.0, avclevel=30.0, aacaot=2.0, videoframerate=29.97002997002997,
@@ -188,7 +225,7 @@ public abstract class Metadata extends AbstractMessage {
                 pair("timescale", track1.getMdhd().getTimeScale()),
                 pair("sampledescription", new Amf0Object[]{object(pair("sampletype", sampleType))})
             );
-            VideoSD video = movie.getVideoSampleDescription();
+            STSD.VideoSD video = movie.getVideoSampleDescription();
             map(map,
                 pair("width", (double) video.getWidth()),
                 pair("height", (double) video.getHeight()),

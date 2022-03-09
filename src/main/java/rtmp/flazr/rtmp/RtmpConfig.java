@@ -35,13 +35,9 @@ public class RtmpConfig {
     public enum Type { SERVER, SERVER_STOP, PROXY, PROXY_STOP }
 
     public static String SERVER_HOME_DIR = "home";
-    public static int TIMER_TICK_SIZE = 10;
+    public static int TIMER_TICK_SIZE = 100;
     public static int SERVER_PORT = 1935;
     public static int SERVER_STOP_PORT = 1934;
-    public static int PROXY_PORT = 8000;
-    public static int PROXY_STOP_PORT = 7999;
-    public static String PROXY_REMOTE_HOST = "127.0.0.1";
-    public static int PROXY_REMOTE_PORT = 1935;
 
     public static void configureServer(String flazrConfPath) {
         configure(flazrConfPath, Type.SERVER);
@@ -53,43 +49,7 @@ public class RtmpConfig {
         return SERVER_STOP_PORT;
     }
 
-    public static void configureProxy(String flazrConfPath) {
-        configure(flazrConfPath, Type.PROXY);
-        //addShutdownHook(PROXY_STOP_PORT);
-    }
-
-    public static int configureProxyStop(String flazrConfPath) {
-        configure(flazrConfPath, Type.PROXY_STOP);
-        return PROXY_STOP_PORT;
-    }
-
     private static void configure(String flazrConfPath, Type type) {
-        //Utils.printlnCopyrightNotice();
-        /*String flazrHome = null;
-        final InputStream is = RtmpConfig.class.getResourceAsStream("/flazr-init.properties");
-        if(is != null) {
-            logger.info("flazr-init.properties found on classpath");
-            final Properties flazrProps = loadProps(is);
-            flazrHome = flazrProps.getProperty("flazr.home");
-            if(flazrHome == null) {
-                logger.warn("'flazr.home' key not found, will try system properties");
-            }
-        } else {
-            logger.warn("flazr-init.properties not found on classpath, will try system property 'flazr.home'");
-        }
-        if(flazrHome == null) {
-            flazrHome = System.getProperty("flazr.home");
-        }
-        if(flazrHome == null) {
-            File currentDir = new File("");
-            logger.warn("'flazr.home' system property not set, will use current directory: {}", currentDir.getAbsolutePath());
-            flazrHome = "";
-        } else if(!flazrHome.endsWith("/")) {
-            flazrHome = flazrHome + "/";
-            logger.info("using 'flazr.home' = {}", flazrHome);
-        }*/
-
-        //File propsFile = new File(flazrHome + "conf/flazr.properties");
         File propsFile = new File(flazrConfPath);
         if(!propsFile.exists()) {
             logger.warn("{} not found, will use configuration defaults", propsFile.getAbsolutePath());
@@ -114,21 +74,6 @@ public class RtmpConfig {
                     }
                     logger.info("home dir: '{}'", homeFile.getAbsolutePath());
                     logger.info("server port: {} (stop {})", SERVER_PORT, SERVER_STOP_PORT);
-                    break;
-                case PROXY:
-                case PROXY_STOP:
-                    Integer proxyStop = parseInt(props.getProperty("proxy.stop.port"));
-                    if(proxyStop != null) PROXY_STOP_PORT = proxyStop;
-                    if(type == Type.PROXY_STOP) {
-                        break;
-                    }
-                    Integer proxyPort = parseInt(props.getProperty("proxy.port"));
-                    if(proxyPort != null) PROXY_PORT = proxyPort;
-                    PROXY_REMOTE_HOST = props.getProperty("proxy.remote.host", "127.0.0.1");
-                    Integer proxyRemote = parseInt(props.getProperty("proxy.remote.port"));
-                    if(proxyRemote != null) PROXY_REMOTE_PORT = proxyRemote;
-                    logger.info("proxy port: {} (stop {})", PROXY_PORT, PROXY_STOP_PORT);
-                    logger.info("proxy remote host: {} port: {}", PROXY_REMOTE_HOST, PROXY_REMOTE_PORT);
                     break;
             }
         }        

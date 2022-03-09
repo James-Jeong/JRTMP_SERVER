@@ -38,9 +38,5 @@ public interface RtmpReader {
     boolean hasNext();
 
     RtmpMessage next();
-    
-    int getWidth();
-    
-    int getHeight();
 
 }

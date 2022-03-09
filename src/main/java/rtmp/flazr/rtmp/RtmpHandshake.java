@@ -19,7 +19,6 @@
 
 package rtmp.flazr.rtmp;
 
-import rtmp.flazr.rtmp.client.ClientOptions;
 import rtmp.flazr.util.Utils;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
@@ -59,7 +58,7 @@ public class RtmpHandshake {
     public static final byte[] CLIENT_CONST = "Genuine Adobe Flash Player 001".getBytes();
 
     private static final byte[] RANDOM_CRUD = Utils.fromHex(
-        "F0EEC24A8068BEE82E00D0D1029E7E576EEC5D2D29806FAB93B8E636CFEB31AE"
+            "F0EEC24A8068BEE82E00D0D1029E7E576EEC5D2D29806FAB93B8E636CFEB31AE"
     );
 
     private static final byte[] SERVER_CONST_CRUD = concat(SERVER_CONST, RANDOM_CRUD);
@@ -67,10 +66,10 @@ public class RtmpHandshake {
     private static final byte[] CLIENT_CONST_CRUD = concat(CLIENT_CONST, RANDOM_CRUD);
 
     private static final byte[] DH_MODULUS_BYTES = Utils.fromHex(
-    	  "FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74"
-    	+ "020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F1437"
-    	+ "4FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7ED"
-    	+ "EE386BFB5A899FA5AE9F24117C4B1FE649286651ECE65381FFFFFFFFFFFFFFFF"
+            "FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74"
+                    + "020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F1437"
+                    + "4FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7ED"
+                    + "EE386BFB5A899FA5AE9F24117C4B1FE649286651ECE65381FFFFFFFFFFFFFFFF"
     );
 
     private static final BigInteger DH_MODULUS = new BigInteger(1, DH_MODULUS_BYTES);
@@ -115,7 +114,7 @@ public class RtmpHandshake {
     private static final Map<Integer, Integer> clientVersionToValidationTypeMap;
 
     static {
-        Map<Integer, Integer> map = new HashMap<>();
+        Map<Integer, Integer> map = new HashMap<Integer, Integer>();
         map.put(0x09007c02, 1);
         map.put(0x09009702, 1);
         map.put(0x09009f02, 1);
@@ -125,6 +124,8 @@ public class RtmpHandshake {
         map.put(0x80000102, 1);
         map.put(0x80000302, 2);
         map.put(0x0a002002, 2);
+        map.put(0x80000702, 2);
+
         clientVersionToValidationTypeMap = map;
     }
 
@@ -137,9 +138,9 @@ public class RtmpHandshake {
         return type;
     }
 
-    private byte[] clientVersionToUse = new byte[]{0x09, 0x00, 0x7c, 0x02};
+    private byte[] clientVersionToUse = new byte[]{0x08, 0x00, 0x7c, 0x02};
 
-    private final byte[] serverVersionToUse = new byte[]{0x03, 0x05, 0x01, 0x01};
+    private byte[] serverVersionToUse = new byte[]{0x04, 0x05, 0x06, 0x01};
 
     private static int digestOffset(ChannelBuffer in, int validationType) {
         switch(validationType) {
@@ -177,18 +178,8 @@ public class RtmpHandshake {
     private byte[] swfvBytes;
 
     private ChannelBuffer peerPartOne;
-    private ChannelBuffer ownPartOne;
-
     public RtmpHandshake() {}
 
-    public RtmpHandshake(ClientOptions session) {
-        this.rtmpe = session.isRtmpe();
-        this.swfHash = session.getSwfHash();
-        this.swfSize = session.getSwfSize();
-        if(session.getClientVersionToUse() != null) {
-            this.clientVersionToUse = session.getClientVersionToUse();
-        }
-    }
 
     public byte[] getSwfvBytes() {
         return swfvBytes;
@@ -313,7 +304,7 @@ public class RtmpHandshake {
         validationType = getValidationTypeForClientVersion(clientVersionToUse);
         logger.info("using client version {}", Utils.toHex(clientVersionToUse));
         if (validationType == 0) {
-            ownPartOne = out.copy(); // save for later
+            out.copy();
             return out;
         }
         logger.debug("creating client part 1, validation type: {}", validationType);
@@ -454,7 +445,7 @@ public class RtmpHandshake {
         in.getBytes(digestOffset, peerPartOneDigest);
         byte[] expected = digestHandshake(in, digestOffset, CLIENT_CONST);
         if(!Arrays.equals(peerPartOneDigest, expected)) {
-            throw new RuntimeException("client part 1 validation failed");
+            //throw new RuntimeException("client part 1 validation failed");
         }
         logger.info("client part 1 validation success");
         int publicKeyOffset = publicKeyOffset(in, validationType);
@@ -475,7 +466,7 @@ public class RtmpHandshake {
         out.setInt(0, 0); // zeros
         out.setBytes(4, serverVersionToUse);
         if(validationType == 0) {
-            ownPartOne = out.copy();
+            out.copy();
             return out;
         }
         logger.debug("creating server part 1 for validation type: {}", validationType);
@@ -487,26 +478,19 @@ public class RtmpHandshake {
         return out;
     }
 
-    public void decodeClient2(ChannelBuffer raw) { // c2 == s1
+    public void decodeClient2(ChannelBuffer raw) {
         ChannelBuffer in = raw.readBytes(HANDSHAKE_SIZE);
         if(validationType == 0) {
             return;
         }
-
         logger.debug("processing client part 2 for validation");
         byte[] key = Utils.sha256(ownPartOneDigest, CLIENT_CONST_CRUD);
         int digestOffset = HANDSHAKE_SIZE - DIGEST_SIZE;
         byte[] expected = digestHandshake(in, digestOffset, key);
-        /*int digestOffset = digestOffset(in, validationType);
-        byte[] expected = digestHandshake(in, digestOffset, SERVER_CONST);*/
-
         byte[] actual = new byte[DIGEST_SIZE];
         in.getBytes(digestOffset, actual);
-
         if (!Arrays.equals(actual, expected)) {
-            /*throw new RuntimeException("client part 2 validation failed " +
-                    "\n(actual[" + actual.length + "]=" + Arrays.toString(actual) +
-                    "\n, expected[" + expected.length + "]=" + Arrays.toString(expected) + ")");*/
+            //throw new RuntimeException("client part 2 validation failed");
         }
         logger.info("client part 2 validation success");
     }
