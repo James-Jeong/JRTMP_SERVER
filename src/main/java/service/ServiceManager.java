@@ -3,6 +3,7 @@ package service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rtmp.RtmpManager;
+import service.monitor.FileKeeper;
 import service.monitor.HaHandler;
 import service.monitor.LongRtmpPubUnitRemover;
 import service.scheduler.schedule.ScheduleManager;
@@ -74,6 +75,16 @@ public class ServiceManager {
                             3, 0, true
                     )
             );
+
+            FileKeeper fileKeeper = new FileKeeper(
+                    scheduleManager,
+                    FileKeeper.class.getSimpleName(),
+                    0, DELAY, TimeUnit.MILLISECONDS,
+                    10, 0, true
+            );
+            if (fileKeeper.init()) {
+                scheduleManager.startJob(MAIN_SCHEDULE_JOB, fileKeeper);
+            }
         }
         ////////////////////////////////////////
 

@@ -56,37 +56,7 @@ public class RtmpManager {
 
         StreamIdResourceManager.getInstance().initResource();
         initRtmpServer();
-
-        ConfigManager configManager = AppInstance.getInstance().getConfigManager();
-        String whitelistPath = configManager.getRegisterWhitelistPath();
-        String blacklistPath = configManager.getRegisterBlacklistPath();
-
-        try {
-            File whitelistFile = new File(whitelistPath);
-            if (!whitelistFile.exists() || whitelistFile.isDirectory()) {
-                logger.error("[RtmpRegisterManager] Fail to get the white list file. (whitelistPath={})", whitelistPath);
-                System.exit(1);
-            } else {
-                // GET LIST ONE TIME
-                whitelist.clear();
-                whitelist.addAll(readAllLines(configManager.getRegisterWhitelistPath()));
-                logger.debug("[RtmpRegisterManager] STREAM WHITE LIST: [{}]", whitelist);
-            }
-
-            File blacklistFile = new File(blacklistPath);
-            if (!blacklistFile.exists() || blacklistFile.isDirectory()) {
-                logger.error("[RtmpRegisterManager] Fail to get the black list file. (blacklistPath={})", blacklistPath);
-                System.exit(1);
-            } else {
-                // GET LIST ONE TIME
-                blacklist.clear();
-                blacklist.addAll(readAllLines(configManager.getRegisterBlacklistPath()));
-                logger.debug("[RtmpRegisterManager] STREAM BLACK LIST: [{}]", blacklist);
-            }
-        } catch (Exception e) {
-            logger.error("[RtmpRegisterManager] Fail to get the user list file(s). (whitelistPath={}, blacklistPath={})", whitelistPath, blacklistPath);
-            System.exit(1);
-        }
+        loadAuthList();
     }
 
     public static RtmpManager getInstance() {
@@ -107,6 +77,45 @@ public class RtmpManager {
         final InetSocketAddress socketAddress = new InetSocketAddress(RtmpConfig.SERVER_PORT);
         bootstrap.bind(socketAddress);
         logger.info("[RtmpManager] RTMP Server started, listening on: [{}]", socketAddress);
+    }
+
+    public void loadAuthList() {
+        try {
+            loadWhitelist();
+            loadBlacklist();
+        } catch (Exception e) {
+            logger.error("[RtmpManager] Fail to get the authentication list file(s).", e);
+        }
+    }
+
+    public void loadWhitelist() {
+        ConfigManager configManager = AppInstance.getInstance().getConfigManager();
+        String whitelistPath = configManager.getRegisterWhitelistPath();
+
+        File whitelistFile = new File(whitelistPath);
+        if (!whitelistFile.exists() || whitelistFile.isDirectory()) {
+            logger.error("[RtmpManager] Fail to get the white list file. (whitelistPath={})", whitelistPath);
+        } else {
+            // GET LIST ONE TIME
+            whitelist.clear();
+            whitelist.addAll(readAllLines(configManager.getRegisterWhitelistPath()));
+            logger.debug("[RtmpManager] STREAM WHITE LIST: [{}]", whitelist);
+        }
+    }
+
+    public void loadBlacklist() {
+        ConfigManager configManager = AppInstance.getInstance().getConfigManager();
+        String blacklistPath = configManager.getRegisterBlacklistPath();
+
+        File blacklistFile = new File(blacklistPath);
+        if (!blacklistFile.exists() || blacklistFile.isDirectory()) {
+            logger.error("[RtmpManager] Fail to get the black list file. (blacklistPath={})", blacklistPath);
+        } else {
+            // GET LIST ONE TIME
+            blacklist.clear();
+            blacklist.addAll(readAllLines(configManager.getRegisterBlacklistPath()));
+            logger.debug("[RtmpManager] STREAM BLACK LIST: [{}]", blacklist);
+        }
     }
 
     public void stop() {
