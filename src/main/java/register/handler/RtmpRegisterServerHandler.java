@@ -74,6 +74,34 @@ public class RtmpRegisterServerHandler extends SimpleChannelInboundHandler<Datag
                 logger.debug("[RtmpRegisterServerHandler] [>] {} ({})", rtmpRegisterReq, readBytes);
 
                 String regId = rtmpRegisterReq.getId();
+
+                /////////////////////////////////////////////
+                // CHECK WHITE & BLACK LIST
+                // 화이트 리스트에 없거나 블랙 리스트에 있으면 거부 (401 NOT_AUTHORIZED)
+                if (!rtmpRegisterManager.getWhitelist().contains(regId)
+                        || rtmpRegisterManager.getBlacklist().contains(regId)) {
+                    RtmpRegisterRes rtmpRegisterRes = new RtmpRegisterRes(
+                            configManager.getRegisterMagicCookie(),
+                            rtmpRegisterReq.getURtspHeader().getMessageType(),
+                            rtmpRegisterReq.getURtspHeader().getSeqNumber(),
+                            rtmpRegisterReq.getURtspHeader().getTimeStamp(),
+                            configManager.getServiceName(),
+                            RtmpRegisterRes.NOT_AUTHORIZED
+                    );
+                    rtmpRegisterRes.setReason("NOT_AUTHORIZED");
+
+                    rtmpRegisterNettyChannel.sendResponse(
+                            datagramPacket.sender().getAddress().getHostAddress(),
+                            rtmpRegisterReq.getListenPort(),
+                            rtmpRegisterRes
+                    );
+
+                    logger.warn("[RtmpRegisterServerHandler] <DENIED> UNKNOWN USER: [{}]", regId);
+
+                    return;
+                }
+                /////////////////////////////////////////////
+
                 String nonce = rtmpRegisterReq.getNonce();
 
                 RtmpRegUnit rtmpRegUnit = rtmpRegisterManager.getRtmpRegUnit(regId);
@@ -181,6 +209,32 @@ public class RtmpRegisterServerHandler extends SimpleChannelInboundHandler<Datag
                 logger.debug("[RtmpRegisterServerHandler] [>] {} ({})", rtmpUnRegisterReq, readBytes);
 
                 String regId = rtmpUnRegisterReq.getId();
+                /////////////////////////////////////////////
+                // CHECK WHITE & BLACK LIST
+                // 화이트 리스트에 없거나 블랙 리스트에 있으면 거부 (400 NOT_ACCEPTED)
+                if (!rtmpRegisterManager.getWhitelist().contains(regId)
+                        || rtmpRegisterManager.getBlacklist().contains(regId)) {
+                    RtmpUnRegisterRes rtmpUnRegisterRes = new RtmpUnRegisterRes(
+                            configManager.getRegisterMagicCookie(),
+                            rtmpUnRegisterReq.getURtspHeader().getMessageType(),
+                            rtmpUnRegisterReq.getURtspHeader().getSeqNumber(),
+                            rtmpUnRegisterReq.getURtspHeader().getTimeStamp(),
+                            RtmpUnRegisterRes.NOT_ACCEPTED
+                    );
+                    rtmpUnRegisterRes.setReason("NOT_ACCEPTED");
+
+                    rtmpRegisterNettyChannel.sendResponse(
+                            datagramPacket.sender().getAddress().getHostAddress(),
+                            rtmpUnRegisterReq.getListenPort(),
+                            rtmpUnRegisterRes
+                    );
+
+                    logger.warn("[RtmpRegisterServerHandler] <DENIED> UNKNOWN USER: [{}]", regId);
+
+                    return;
+                }
+                /////////////////////////////////////////////
+
                 RtmpRegUnit rtmpRegUnit = rtmpRegisterManager.getRtmpRegUnit(regId);
                 RtmpUnRegisterRes rtmpUnRegisterRes;
                 if (rtmpRegUnit == null) {

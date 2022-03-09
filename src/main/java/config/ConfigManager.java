@@ -43,6 +43,8 @@ public class ConfigManager {
     public static final String FIELD_REGISTER_HASH_KEY = "REGISTER_HASH_KEY";
     public static final String FIELD_REGISTER_LISTEN_IP = "REGISTER_LISTEN_IP";
     public static final String FIELD_REGISTER_LISTEN_PORT = "REGISTER_LISTEN_PORT";
+    public static final String FIELD_REGISTER_WHITELIST_PATH = "REGISTER_WHITELIST_PATH";
+    public static final String FIELD_REGISTER_BLACKLIST_PATH = "REGISTER_BLACKLIST_PATH";
     ////////////////////////////////////////////////////////////
 
     ////////////////////////////////////////////////////////////
@@ -62,6 +64,8 @@ public class ConfigManager {
     private String registerHashKey = null;
     private String registerListenIp = null;
     private int registerListenPort = 0;
+    private String registerWhitelistPath = null;
+    private String registerBlacklistPath = null;
     ////////////////////////////////////////////////////////////
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -186,6 +190,18 @@ public class ConfigManager {
             }
         }
 
+        this.registerWhitelistPath = getIniValue(SECTION_REGISTER, FIELD_REGISTER_WHITELIST_PATH);
+        if (this.registerWhitelistPath == null) {
+            logger.error("Fail to load [{}-{}].", SECTION_REGISTER, FIELD_REGISTER_WHITELIST_PATH);
+            System.exit(1);
+        }
+
+        this.registerBlacklistPath = getIniValue(SECTION_REGISTER, FIELD_REGISTER_BLACKLIST_PATH);
+        if (this.registerBlacklistPath == null) {
+            logger.error("Fail to load [{}-{}].", SECTION_REGISTER, FIELD_REGISTER_BLACKLIST_PATH);
+            System.exit(1);
+        }
+
         logger.debug("Load [{}] config...(OK)", SECTION_REGISTER);
     }
 
@@ -269,5 +285,13 @@ public class ConfigManager {
 
     public int getRegisterListenPort() {
         return registerListenPort;
+    }
+
+    public String getRegisterWhitelistPath() {
+        return registerWhitelistPath;
+    }
+
+    public String getRegisterBlacklistPath() {
+        return registerBlacklistPath;
     }
 }
