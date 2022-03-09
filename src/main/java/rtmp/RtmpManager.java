@@ -1,5 +1,6 @@
 package rtmp;
 
+import register.RtmpRegisterManager;
 import rtmp.flazr.rtmp.RtmpConfig;
 import rtmp.flazr.rtmp.server.ServerApplication;
 import rtmp.flazr.rtmp.server.ServerPipelineFactory;
@@ -12,7 +13,7 @@ import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import rtmp.base.RtmpUnit;
+import rtmp.base.RtmpPubUnit;
 import service.AppInstance;
 import service.StreamIdResourceManager;
 
@@ -40,8 +41,10 @@ public class RtmpManager {
     private final Map<String, ServerApplication> APPLICATIONS;
     private ChannelFactory factory = null;
 
-    private final HashMap<Integer, RtmpUnit> rtmpUnitMap = new HashMap<>();
-    private final ReentrantLock rtmpUnitMapLock = new ReentrantLock();
+    private final HashMap<Integer, RtmpPubUnit> rtmpPubUnitMap = new HashMap<>();
+    private final ReentrantLock rtmpPubUnitMapLock = new ReentrantLock();
+
+    private final RtmpRegisterManager rtmpRegisterManager = new RtmpRegisterManager();
     ////////////////////////////////////////////////////////////
 
     ////////////////////////////////////////////////////////////
@@ -51,6 +54,8 @@ public class RtmpManager {
 
         StreamIdResourceManager.getInstance().initResource();
         initRtmpServer();
+
+        rtmpRegisterManager.addRegisterChannel();
     }
 
     public static RtmpManager getInstance() {
@@ -74,7 +79,9 @@ public class RtmpManager {
     }
 
     public void stop() {
-        deleteAllRtmpUnits();
+        rtmpRegisterManager.removeRegisterChannel();
+
+        deleteAllRtmpPubUnits();
 
         final ChannelGroupFuture future = CHANNELS.close();
         logger.info("[RtmpManager] Closing rtmp channels...");
@@ -88,75 +95,75 @@ public class RtmpManager {
     ////////////////////////////////////////////////////////////
 
     ////////////////////////////////////////////////////////////
-    public RtmpUnit addRtmpUnit(int streamId) {
-        if (getRtmpUnit(streamId) != null) { return null; }
+    public RtmpPubUnit addRtmpPubUnit(int streamId) {
+        if (getRtmpPubUnit(streamId) != null) { return null; }
 
         try {
-            rtmpUnitMapLock.lock();
+            rtmpPubUnitMapLock.lock();
 
-            RtmpUnit rtmpUnit = new RtmpUnit(streamId);
-            rtmpUnitMap.putIfAbsent(streamId, rtmpUnit);
+            RtmpPubUnit rtmpUnit = new RtmpPubUnit(streamId);
+            rtmpPubUnitMap.putIfAbsent(streamId, rtmpUnit);
             logger.debug("[RtmpManager] [(+)CREATED] \n{}", rtmpUnit);
             return rtmpUnit;
         } catch (Exception e) {
-            logger.warn("Fail to open the rtmp unit. (id={})", streamId, e);
+            logger.warn("Fail to open the rtmp publish unit. (id={})", streamId, e);
             return null;
         } finally {
-            rtmpUnitMapLock.unlock();
+            rtmpPubUnitMapLock.unlock();
         }
     }
 
-    public void deleteRtmpUnit(int streamId) {
-        RtmpUnit rtmpUnit = getRtmpUnit(streamId);
+    public void deleteRtmpPubUnit(int streamId) {
+        RtmpPubUnit rtmpUnit = getRtmpPubUnit(streamId);
         if (rtmpUnit == null) { return; }
 
         try {
-            rtmpUnitMapLock.lock();
+            rtmpPubUnitMapLock.lock();
 
             logger.debug("[RtmpManager] [(-)DELETED] \n{}", rtmpUnit);
 
-            rtmpUnitMap.remove(streamId);
+            rtmpPubUnitMap.remove(streamId);
         } catch (Exception e) {
-            logger.warn("Fail to close the rtmp unit. (id={})", streamId, e);
+            logger.warn("Fail to close the rtmp publish unit. (id={})", streamId, e);
         } finally {
-            rtmpUnitMapLock.unlock();
+            rtmpPubUnitMapLock.unlock();
         }
     }
 
-    public HashMap<Integer, RtmpUnit> getCloneDashMap( ) {
-        HashMap<Integer, RtmpUnit> cloneMap;
+    public HashMap<Integer, RtmpPubUnit> getCloneRtmpPubUnitMap( ) {
+        HashMap<Integer, RtmpPubUnit> cloneMap;
 
         try {
-            rtmpUnitMapLock.lock();
+            rtmpPubUnitMapLock.lock();
 
-            cloneMap = (HashMap<Integer, RtmpUnit>) rtmpUnitMap.clone();
+            cloneMap = (HashMap<Integer, RtmpPubUnit>) rtmpPubUnitMap.clone();
         } catch (Exception e) {
-            logger.warn("Fail to clone the rtmp unit map.", e);
-            cloneMap = rtmpUnitMap;
+            logger.warn("Fail to clone the rtmp publish unit map.", e);
+            cloneMap = rtmpPubUnitMap;
         } finally {
-            rtmpUnitMapLock.unlock();
+            rtmpPubUnitMapLock.unlock();
         }
 
         return cloneMap;
     }
 
-    public void deleteAllRtmpUnits() {
+    public void deleteAllRtmpPubUnits() {
         try {
-            rtmpUnitMapLock.lock();
-            rtmpUnitMap.entrySet().removeIf(Objects::nonNull);
+            rtmpPubUnitMapLock.lock();
+            rtmpPubUnitMap.entrySet().removeIf(Objects::nonNull);
         } catch (Exception e) {
-            logger.warn("Fail to close all rtmp units.", e);
+            logger.warn("Fail to close all rtmp publish units.", e);
         } finally {
-            rtmpUnitMapLock.unlock();
+            rtmpPubUnitMapLock.unlock();
         }
     }
 
-    public RtmpUnit getRtmpUnit(int streamId) {
-        return rtmpUnitMap.get(streamId);
+    public RtmpPubUnit getRtmpPubUnit(int streamId) {
+        return rtmpPubUnitMap.get(streamId);
     }
 
-    public int getRtmpUnitMapSize() {
-        return rtmpUnitMap.size();
+    public int getRtmpPubUnitMapSize() {
+        return rtmpPubUnitMap.size();
     }
     ////////////////////////////////////////////////////////////
 
@@ -167,6 +174,10 @@ public class RtmpManager {
 
     public Map<String, ServerApplication> getAPPLICATIONS() {
         return APPLICATIONS;
+    }
+
+    public RtmpRegisterManager getRtmpRegisterManager() {
+        return rtmpRegisterManager;
     }
     ////////////////////////////////////////////////////////////
 

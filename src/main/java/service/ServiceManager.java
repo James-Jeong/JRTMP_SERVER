@@ -4,7 +4,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rtmp.RtmpManager;
 import service.monitor.HaHandler;
-import service.monitor.LongSessionRemover;
+import service.monitor.LongRtmpPubUnitRemover;
+import service.monitor.LongRtmpRegUnitRemover;
 import service.scheduler.schedule.ScheduleManager;
 
 import java.io.File;
@@ -67,11 +68,20 @@ public class ServiceManager {
             );
 
             scheduleManager.startJob(MAIN_SCHEDULE_JOB,
-                    new LongSessionRemover(
+                    new LongRtmpPubUnitRemover(
                             scheduleManager,
-                            LongSessionRemover.class.getSimpleName(),
+                            LongRtmpPubUnitRemover.class.getSimpleName(),
                             0, DELAY, TimeUnit.MILLISECONDS,
                             3, 0, true
+                    )
+            );
+
+            scheduleManager.startJob(MAIN_SCHEDULE_JOB,
+                    new LongRtmpRegUnitRemover(
+                            scheduleManager,
+                            LongRtmpRegUnitRemover.class.getSimpleName(),
+                            0, DELAY, TimeUnit.MILLISECONDS,
+                            4, 0, true
                     )
             );
         }

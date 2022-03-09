@@ -23,6 +23,7 @@ public class ConfigManager {
     // Section String
     public static final String SECTION_COMMON = "COMMON"; // COMMON Section 이름
     public static final String SECTION_RTMP = "RTMP"; // RTMP Section 이름
+    public static final String SECTION_REGISTER = "REGISTER"; // REGISTER Section 이름
     ////////////////////////////////////////////////////////////
 
     ////////////////////////////////////////////////////////////
@@ -36,6 +37,12 @@ public class ConfigManager {
     public static final String FIELD_RTMP_LISTEN_IP = "RTMP_LISTEN_IP";
     public static final String FIELD_RTMP_LISTEN_PORT = "RTMP_LISTEN_PORT";
     public static final String FIELD_RTMP_MEDIA_BASE_NAME = "RTMP_MEDIA_BASE_NAME";
+
+    // REGISTER
+    public static final String FIELD_REGISTER_MAGIC_COOKIE = "REGISTER_MAGIC_COOKIE";
+    public static final String FIELD_REGISTER_HASH_KEY = "REGISTER_HASH_KEY";
+    public static final String FIELD_REGISTER_LISTEN_IP = "REGISTER_LISTEN_IP";
+    public static final String FIELD_REGISTER_LISTEN_PORT = "REGISTER_LISTEN_PORT";
     ////////////////////////////////////////////////////////////
 
     ////////////////////////////////////////////////////////////
@@ -49,6 +56,12 @@ public class ConfigManager {
     private String rtmpListenIp = null;
     private int rtmpListenPort = 0;
     private String rtmpMediaBaseName = null;
+
+    // REGISTER
+    private String registerMagicCookie = null;
+    private String registerHashKey = null;
+    private String registerListenIp = null;
+    private int registerListenPort = 0;
     ////////////////////////////////////////////////////////////
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -70,6 +83,7 @@ public class ConfigManager {
 
             loadCommonConfig();
             loadRtmpConfig();
+            loadRegisterConfig();
 
             logger.info("Load config [{}]", configPath);
         } catch (IOException e) {
@@ -137,6 +151,44 @@ public class ConfigManager {
         logger.debug("Load [{}] config...(OK)", SECTION_RTMP);
     }
 
+    /**
+     * @fn private void loadRegisterConfig()
+     * @brief REGISTER Section 을 로드하는 함수
+     */
+    private void loadRegisterConfig() {
+        this.registerMagicCookie = getIniValue(SECTION_REGISTER, FIELD_REGISTER_MAGIC_COOKIE);
+        if (this.registerMagicCookie == null) {
+            logger.error("Fail to load [{}-{}].", SECTION_REGISTER, FIELD_REGISTER_MAGIC_COOKIE);
+            System.exit(1);
+        }
+
+        this.registerHashKey = getIniValue(SECTION_REGISTER, FIELD_REGISTER_HASH_KEY);
+        if (this.registerHashKey == null) {
+            logger.error("Fail to load [{}-{}].", SECTION_REGISTER, FIELD_REGISTER_HASH_KEY);
+            System.exit(1);
+        }
+
+        this.registerListenIp = getIniValue(SECTION_REGISTER, FIELD_REGISTER_LISTEN_IP);
+        if (this.registerListenIp == null) {
+            logger.error("Fail to load [{}-{}].", SECTION_REGISTER, FIELD_REGISTER_LISTEN_IP);
+            System.exit(1);
+        }
+
+        String registerListenPortString = getIniValue(SECTION_REGISTER, FIELD_REGISTER_LISTEN_PORT);
+        if (registerListenPortString == null) {
+            logger.error("Fail to load [{}-{}].", SECTION_REGISTER, FIELD_REGISTER_LISTEN_PORT);
+            System.exit(1);
+        } else {
+            this.registerListenPort = Integer.parseInt(registerListenPortString);
+            if (this.registerListenPort <= 0 || this.registerListenPort > 65535) {
+                logger.error("Fail to load [{}-{}].", SECTION_REGISTER, FIELD_REGISTER_LISTEN_PORT);
+                System.exit(1);
+            }
+        }
+
+        logger.debug("Load [{}] config...(OK)", SECTION_REGISTER);
+    }
+
     ////////////////////////////////////////////////////////////////////////////////
 
     /**
@@ -201,5 +253,21 @@ public class ConfigManager {
 
     public String getRtmpMediaBaseName() {
         return rtmpMediaBaseName;
+    }
+
+    public String getRegisterMagicCookie() {
+        return registerMagicCookie;
+    }
+
+    public String getRegisterHashKey() {
+        return registerHashKey;
+    }
+
+    public String getRegisterListenIp() {
+        return registerListenIp;
+    }
+
+    public int getRegisterListenPort() {
+        return registerListenPort;
     }
 }

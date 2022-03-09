@@ -30,7 +30,7 @@ import org.jboss.netty.channel.group.ChannelGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rtmp.RtmpManager;
-import rtmp.base.RtmpUnit;
+import rtmp.base.RtmpPubUnit;
 import service.StreamIdResourceManager;
 
 import java.util.ArrayList;
@@ -398,7 +398,7 @@ public class ServerHandler extends SimpleChannelHandler {
             }
 
             /////////////////////////////
-            RtmpUnit rtmpUnit = RtmpManager.getInstance().addRtmpUnit(streamId);
+            RtmpPubUnit rtmpUnit = RtmpManager.getInstance().addRtmpPubUnit(streamId);
             rtmpUnit.setStreamName(streamName);
             rtmpUnit.setPublishTypeString(publishTypeString);
             /////////////////////////////
@@ -429,7 +429,7 @@ public class ServerHandler extends SimpleChannelHandler {
             logger.debug("[ServerHandler] publisher disconnected, stream un-published");
 
             /////////////////////////////
-            RtmpManager.getInstance().deleteRtmpUnit(streamId);
+            RtmpManager.getInstance().deleteRtmpPubUnit(streamId);
             StreamIdResourceManager.getInstance().restoreStreamId(streamId);
             /////////////////////////////
         }

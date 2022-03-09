@@ -5,10 +5,10 @@ import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RtmpUnit {
+public class RtmpPubUnit {
 
     ////////////////////////////////////////////////////////////
-    private static final Logger logger = LoggerFactory.getLogger(RtmpUnit.class);
+    private static final Logger logger = LoggerFactory.getLogger(RtmpPubUnit.class);
 
     private final long initiationTime = System.currentTimeMillis();
 
@@ -18,7 +18,7 @@ public class RtmpUnit {
     ////////////////////////////////////////////////////////////
 
     ////////////////////////////////////////////////////////////
-    public RtmpUnit(int id) {
+    public RtmpPubUnit(int id) {
         this.id = id;
     }
     ////////////////////////////////////////////////////////////
