@@ -7,7 +7,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rtmp.RtmpManager;
 import service.AppInstance;
-import service.ServiceManager;
 import service.scheduler.job.Job;
 import service.scheduler.schedule.ScheduleManager;
 
@@ -40,7 +39,7 @@ public class FileKeeper extends Job {
             watchService = FileSystems.getDefault().newWatchService();
 
             ConfigManager configManager = AppInstance.getInstance().getConfigManager();
-            Path basePath = Paths.get(configManager.getRegisterWhitelistPath()).getParent();
+            Path basePath = Paths.get(configManager.getAuthWhitelistPath()).getParent();
             basePath.register(
                     watchService,
                     StandardWatchEventKinds.ENTRY_CREATE,
@@ -49,8 +48,8 @@ public class FileKeeper extends Job {
                     StandardWatchEventKinds.OVERFLOW
             );
 
-            whitelistPath = Paths.get(configManager.getRegisterWhitelistPath());
-            blacklistPath = Paths.get(configManager.getRegisterBlacklistPath());
+            whitelistPath = Paths.get(configManager.getAuthWhitelistPath());
+            blacklistPath = Paths.get(configManager.getAuthBlacklistPath());
 
             logger.debug("[FileKeeper] Success to start the watch service. (basePath={}, whitelistPath={}, blacklistPath={})", basePath, whitelistPath, blacklistPath);
             return true;

@@ -90,7 +90,7 @@ public class RtmpManager {
 
     public void loadWhitelist() {
         ConfigManager configManager = AppInstance.getInstance().getConfigManager();
-        String whitelistPath = configManager.getRegisterWhitelistPath();
+        String whitelistPath = configManager.getAuthWhitelistPath();
 
         File whitelistFile = new File(whitelistPath);
         if (!whitelistFile.exists() || whitelistFile.isDirectory()) {
@@ -98,14 +98,14 @@ public class RtmpManager {
         } else {
             // GET LIST ONE TIME
             whitelist.clear();
-            whitelist.addAll(readAllLines(configManager.getRegisterWhitelistPath()));
+            whitelist.addAll(readAllLines(configManager.getAuthWhitelistPath()));
             logger.debug("[RtmpManager] STREAM WHITE LIST: [{}]", whitelist);
         }
     }
 
     public void loadBlacklist() {
         ConfigManager configManager = AppInstance.getInstance().getConfigManager();
-        String blacklistPath = configManager.getRegisterBlacklistPath();
+        String blacklistPath = configManager.getAuthBlacklistPath();
 
         File blacklistFile = new File(blacklistPath);
         if (!blacklistFile.exists() || blacklistFile.isDirectory()) {
@@ -113,7 +113,7 @@ public class RtmpManager {
         } else {
             // GET LIST ONE TIME
             blacklist.clear();
-            blacklist.addAll(readAllLines(configManager.getRegisterBlacklistPath()));
+            blacklist.addAll(readAllLines(configManager.getAuthBlacklistPath()));
             logger.debug("[RtmpManager] STREAM BLACK LIST: [{}]", blacklist);
         }
     }

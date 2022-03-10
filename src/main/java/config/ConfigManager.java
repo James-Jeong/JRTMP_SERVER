@@ -23,7 +23,7 @@ public class ConfigManager {
     // Section String
     public static final String SECTION_COMMON = "COMMON"; // COMMON Section 이름
     public static final String SECTION_RTMP = "RTMP"; // RTMP Section 이름
-    public static final String SECTION_REGISTER = "REGISTER"; // REGISTER Section 이름
+    public static final String SECTION_AUTH = "AUTH"; // AUTH Section 이름
     ////////////////////////////////////////////////////////////
 
     ////////////////////////////////////////////////////////////
@@ -38,9 +38,9 @@ public class ConfigManager {
     public static final String FIELD_RTMP_LISTEN_PORT = "RTMP_LISTEN_PORT";
     public static final String FIELD_RTMP_MEDIA_BASE_NAME = "RTMP_MEDIA_BASE_NAME";
 
-    // REGISTER
-    public static final String FIELD_REGISTER_WHITELIST_PATH = "REGISTER_WHITELIST_PATH";
-    public static final String FIELD_REGISTER_BLACKLIST_PATH = "REGISTER_BLACKLIST_PATH";
+    // AUTH
+    public static final String FIELD_AUTH_WHITELIST_PATH = "AUTH_WHITELIST_PATH";
+    public static final String FIELD_AUTH_BLACKLIST_PATH = "AUTH_BLACKLIST_PATH";
     ////////////////////////////////////////////////////////////
 
     ////////////////////////////////////////////////////////////
@@ -55,9 +55,9 @@ public class ConfigManager {
     private int rtmpListenPort = 0;
     private String rtmpMediaBaseName = null;
 
-    // REGISTER
-    private String registerWhitelistPath = null;
-    private String registerBlacklistPath = null;
+    // AUTH
+    private String authWhitelistPath = null;
+    private String authBlacklistPath = null;
     ////////////////////////////////////////////////////////////
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -79,7 +79,7 @@ public class ConfigManager {
 
             loadCommonConfig();
             loadRtmpConfig();
-            loadRegisterConfig();
+            loadAuthConfig();
 
             logger.info("Load config [{}]", configPath);
         } catch (IOException e) {
@@ -148,23 +148,23 @@ public class ConfigManager {
     }
 
     /**
-     * @fn private void loadRegisterConfig()
-     * @brief REGISTER Section 을 로드하는 함수
+     * @fn private void loadAuthConfig()
+     * @brief AUTH Section 을 로드하는 함수
      */
-    private void loadRegisterConfig() {
-        this.registerWhitelistPath = getIniValue(SECTION_REGISTER, FIELD_REGISTER_WHITELIST_PATH);
-        if (this.registerWhitelistPath == null) {
-            logger.error("Fail to load [{}-{}].", SECTION_REGISTER, FIELD_REGISTER_WHITELIST_PATH);
+    private void loadAuthConfig() {
+        this.authWhitelistPath = getIniValue(SECTION_AUTH, FIELD_AUTH_WHITELIST_PATH);
+        if (this.authWhitelistPath == null) {
+            logger.error("Fail to load [{}-{}].", SECTION_AUTH, FIELD_AUTH_WHITELIST_PATH);
             System.exit(1);
         }
 
-        this.registerBlacklistPath = getIniValue(SECTION_REGISTER, FIELD_REGISTER_BLACKLIST_PATH);
-        if (this.registerBlacklistPath == null) {
-            logger.error("Fail to load [{}-{}].", SECTION_REGISTER, FIELD_REGISTER_BLACKLIST_PATH);
+        this.authBlacklistPath = getIniValue(SECTION_AUTH, FIELD_AUTH_BLACKLIST_PATH);
+        if (this.authBlacklistPath == null) {
+            logger.error("Fail to load [{}-{}].", SECTION_AUTH, FIELD_AUTH_BLACKLIST_PATH);
             System.exit(1);
         }
 
-        logger.debug("Load [{}] config...(OK)", SECTION_REGISTER);
+        logger.debug("Load [{}] config...(OK)", SECTION_AUTH);
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -233,11 +233,11 @@ public class ConfigManager {
         return rtmpMediaBaseName;
     }
 
-    public String getRegisterWhitelistPath() {
-        return registerWhitelistPath;
+    public String getAuthWhitelistPath() {
+        return authWhitelistPath;
     }
 
-    public String getRegisterBlacklistPath() {
-        return registerBlacklistPath;
+    public String getAuthBlacklistPath() {
+        return authBlacklistPath;
     }
 }
