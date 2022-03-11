@@ -18,20 +18,20 @@
  */
 package rtmp.flazr.rtmp.server;
 
-import rtmp.flazr.rtmp.RtmpMessage;
-import rtmp.flazr.rtmp.message.Metadata;
-import rtmp.flazr.util.Utils;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import rtmp.flazr.rtmp.RtmpMessage;
+import rtmp.flazr.rtmp.message.Metadata;
+import rtmp.flazr.util.Utils;
 
 import java.util.*;
 
 public class ServerStream {
-    private static final Logger logger = LoggerFactory.getLogger(ServerStream.class);
-    //
+
+    ///////////////////////////////////////////////////////
     public enum PublishType {
         LIVE,
         APPEND,
@@ -43,32 +43,40 @@ public class ServerStream {
             return PublishType.valueOf(raw.toUpperCase());
         }
     }
-    //
+    ///////////////////////////////////////////////////////
+
+    ///////////////////////////////////////////////////////
+    private static final Logger logger = LoggerFactory.getLogger(ServerStream.class);
+
     private final String name;
     private final PublishType publishType;
     private final ChannelGroup subscribers;
     private final List<RtmpMessage> configMessages;
     private final Date createTime;
     private Channel publisher;
-    private Map<String, String> metadata;
-    //
+    private final Map<String, String> metadata;
+    ///////////////////////////////////////////////////////
 
-    //
+    ///////////////////////////////////////////////////////
     public ServerStream(final String rawName, final String typeString) {
         this.name = Utils.trimSlashes(rawName).toLowerCase();
-        createTime=new Date();
-        configMessages = new ArrayList<RtmpMessage>();
-        if(typeString != null) {
+        createTime = new Date();
+        configMessages = new ArrayList<>();
+
+        if (typeString != null) {
             this.publishType = PublishType.parse(typeString); // TODO record, append
             subscribers = new DefaultChannelGroup(name);
         } else {
             this.publishType = null;
             subscribers = null;
         }
-        metadata=new HashMap<String, String>();
+
+        metadata = new HashMap<>();
         logger.info("Created ServerStream {}", this);
     }
+    ///////////////////////////////////////////////////////
 
+    ///////////////////////////////////////////////////////
     public boolean isLive() {
         return publishType != null && publishType == PublishType.LIVE;
     }
@@ -106,16 +114,10 @@ public class ServerStream {
         return publisher;
     }
 
-    /**
-     * @return the metadata
-     */
     public Map<String, String> getMetadata() {
         return metadata;
     }
 
-    /**
-     * @param metadata the metadata to set
-     */
     public void setMetadata(Metadata metadata) {
         this.metadata.put("duration", metadata.getInnerValue("duration"));
         this.metadata.put("width", metadata.getInnerValue("width"));
@@ -125,7 +127,6 @@ public class ServerStream {
         this.metadata.put("videocodecid", metadata.getInnerValue("videocodecid"));
         this.metadata.put("encoder", metadata.getInnerValue("encoder"));
         this.metadata.put("filesize", metadata.getInnerValue("filesize"));
-
     }
 
     @Override
@@ -139,5 +140,6 @@ public class ServerStream {
         sb.append(']');
         return sb.toString();
     }
+    ///////////////////////////////////////////////////////
 
 }

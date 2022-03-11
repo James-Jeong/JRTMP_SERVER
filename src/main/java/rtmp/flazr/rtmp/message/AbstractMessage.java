@@ -19,10 +19,10 @@
 
 package rtmp.flazr.rtmp.message;
 
+import org.jboss.netty.buffer.ChannelBuffer;
 import rtmp.flazr.amf.Amf0Object;
 import rtmp.flazr.rtmp.RtmpHeader;
 import rtmp.flazr.rtmp.RtmpMessage;
-import org.jboss.netty.buffer.ChannelBuffer;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

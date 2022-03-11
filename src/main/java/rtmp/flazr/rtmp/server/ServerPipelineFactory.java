@@ -19,11 +19,11 @@
 
 package rtmp.flazr.rtmp.server;
 
-import rtmp.flazr.rtmp.RtmpDecoder;
-import rtmp.flazr.rtmp.RtmpEncoder;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.Channels;
+import rtmp.flazr.rtmp.RtmpDecoder;
+import rtmp.flazr.rtmp.RtmpEncoder;
 
 public class ServerPipelineFactory implements ChannelPipelineFactory {
 

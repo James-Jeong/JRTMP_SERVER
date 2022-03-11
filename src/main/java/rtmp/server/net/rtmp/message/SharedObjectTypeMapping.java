@@ -19,9 +19,9 @@ package rtmp.server.net.rtmp.message;
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
  */
 
-import rtmp.server.so.ISharedObjectEvent.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import rtmp.server.so.ISharedObjectEvent.Type;
 
 /**
  * SO event types mapping

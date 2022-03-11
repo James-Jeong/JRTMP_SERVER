@@ -19,8 +19,8 @@
 
 package rtmp.flazr.rtmp.message;
 
-import rtmp.flazr.rtmp.RtmpHeader;
 import org.jboss.netty.buffer.ChannelBuffer;
+import rtmp.flazr.rtmp.RtmpHeader;
 
 public class Aggregate extends DataMessage {
 

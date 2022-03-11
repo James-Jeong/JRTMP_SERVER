@@ -19,8 +19,8 @@
 
 package rtmp.flazr.io.f4v.box;
 
-import rtmp.flazr.util.Utils;
 import org.jboss.netty.buffer.ChannelBuffer;
+import rtmp.flazr.util.Utils;
 
 /**
  * thanks to Paul Kendall for the patch !

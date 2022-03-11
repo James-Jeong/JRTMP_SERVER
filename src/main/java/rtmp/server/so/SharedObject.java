@@ -19,9 +19,11 @@ package rtmp.server.so;
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
  */
 
-import rtmp.flazr.rtmp.RtmpHeader;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.Channel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import rtmp.flazr.rtmp.RtmpHeader;
 import rtmp.server.AttributeStore;
 import rtmp.server.api.IAttributeStore;
 import rtmp.server.api.event.IEventListener;
@@ -29,8 +31,6 @@ import rtmp.server.api.statistics.ISharedObjectStatistics;
 import rtmp.server.api.statistics.support.StatisticsCounter;
 import rtmp.server.net.rtmp.message.Constants;
 import rtmp.server.so.ISharedObjectEvent.Type;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;

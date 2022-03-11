@@ -19,9 +19,9 @@
 
 package rtmp.flazr.rtmp.message;
 
+import org.jboss.netty.buffer.ChannelBuffer;
 import rtmp.flazr.rtmp.RtmpHeader;
 import rtmp.flazr.rtmp.RtmpMessage;
-import org.jboss.netty.buffer.ChannelBuffer;
 import rtmp.flazr.util.ValueToEnum;
 
 public enum MessageType implements ValueToEnum.IntValue {

@@ -19,6 +19,10 @@
 
 package rtmp.flazr.io.f4v;
 
+import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBuffers;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import rtmp.flazr.io.BufferReader;
 import rtmp.flazr.io.FileChannelReader;
 import rtmp.flazr.io.flv.FlvAtom;
@@ -30,10 +34,6 @@ import rtmp.flazr.rtmp.message.Audio;
 import rtmp.flazr.rtmp.message.Metadata;
 import rtmp.flazr.rtmp.message.Video;
 import rtmp.flazr.util.Utils;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -91,27 +91,31 @@ public class F4vReader implements RtmpReader {
     @Override
     public long getTimePosition() {
         final int index;
-        if(cursor == samples.size()) {
+        if (cursor == samples.size()) {
             index = cursor - 1;
         } else {
             index = cursor;
         }
+
         return samples.get(index).getTime();
     }
 
     @Override
     public long seek(long timePosition) {
         cursor = 0;
-        while(cursor < samples.size()) {
+        while (cursor < samples.size()) {
             final Sample sample = samples.get(cursor);
-            if(sample.getTime() >= timePosition) {
+            if (sample.getTime() >= timePosition) {
                 break;
             }
+
             cursor++;
         }
-        while(!samples.get(cursor).isSyncSample() && cursor > 0) {
+
+        while (!samples.get(cursor).isSyncSample() && cursor > 0) {
             cursor--;
         }
+
         return samples.get(cursor).getTime();
     }
 
@@ -124,44 +128,61 @@ public class F4vReader implements RtmpReader {
 
     @Override
     public RtmpMessage next() {
-        if(aggregateDuration <= 0) {
+        if (aggregateDuration <= 0) {
             return getMessage(samples.get(cursor++));
         }
+
         final ChannelBuffer out = ChannelBuffers.dynamicBuffer();
         int startSampleTime = -1;
-        while(cursor < samples.size()) {
+        while (cursor < samples.size()) {
             final Sample sample = samples.get(cursor++);
-            if(startSampleTime == -1) {
+            if (startSampleTime == -1) {
                 startSampleTime = sample.getTime();
             }
+
             final RtmpMessage message = getMessage(sample);
             final RtmpHeader header = message.getHeader();
-            final FlvAtom flvAtom = new FlvAtom(header.getMessageType(), header.getTime(), message.encode());
+            final FlvAtom flvAtom = new FlvAtom(
+                    header.getMessageType(),
+                    header.getTime(),
+                    message.encode()
+            );
             final ChannelBuffer temp = flvAtom.write();
-            if(out.readableBytes() + temp.readableBytes() > AGGREGATE_SIZE_LIMIT) {
+
+            if (out.readableBytes() + temp.readableBytes() > AGGREGATE_SIZE_LIMIT) {
                 cursor--;
                 break;
             }
+
             out.writeBytes(temp);
-            if(sample.getTime() - startSampleTime > aggregateDuration) {
+            if (sample.getTime() - startSampleTime > aggregateDuration) {
                 break;
             }
         }
+
         return new Aggregate(startSampleTime, out);
     }
 
     private RtmpMessage getMessage(final Sample sample) {
         in.position(sample.getFileOffset());
+
         final byte[] sampleBytes = in.readBytes(sample.getSize());        
-        final byte[] prefix;        
-        if(sample.isVideo()) {
-            if(sample.isSyncSample()) {
+        final byte[] prefix;
+
+        if (sample.isVideo()) {
+            if (sample.isSyncSample()) {
                 prefix = AVC1_PREFIX_KEYFRAME;
             } else {
                 prefix = AVC1_PREFIX;
             }
+
             // TODO move prefix logic to Audio / Video
-            return new Video(sample.getTime(), prefix, sample.getCompositionTimeOffset(), sampleBytes);
+            return new Video(
+                    sample.getTime(),
+                    prefix,
+                    sample.getCompositionTimeOffset(),
+                    sampleBytes
+            );
         } else {
             prefix = MP4A_PREFIX;
             return new Audio(sample.getTime(), prefix, sampleBytes);
@@ -171,13 +192,6 @@ public class F4vReader implements RtmpReader {
     @Override
     public void close() {
         in.close();
-    }   
-
-    public static void main(String[] args) {
-        F4vReader reader = new F4vReader("test2.5.mp4");
-        while(reader.hasNext()) {
-            logger.debug("read: {}", reader.next());
-        }
     }
 
 }

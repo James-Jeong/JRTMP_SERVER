@@ -19,15 +19,18 @@
 
 package rtmp.flazr.io.flv;
 
-import rtmp.flazr.io.BufferReader;
-import rtmp.flazr.io.FileChannelReader;
-import rtmp.flazr.rtmp.RtmpMessage;
-import rtmp.flazr.rtmp.RtmpReader;
-import rtmp.flazr.rtmp.message.*;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import rtmp.flazr.io.BufferReader;
+import rtmp.flazr.io.FileChannelReader;
+import rtmp.flazr.rtmp.RtmpMessage;
+import rtmp.flazr.rtmp.RtmpReader;
+import rtmp.flazr.rtmp.message.Aggregate;
+import rtmp.flazr.rtmp.message.MessageType;
+import rtmp.flazr.rtmp.message.Metadata;
+import rtmp.flazr.rtmp.message.MetadataAmf0;
 
 public class FlvReader implements RtmpReader {
 
@@ -88,16 +91,14 @@ public class FlvReader implements RtmpReader {
 
     private static boolean isSyncFrame(final RtmpMessage message) {
         final byte firstByte = message.encode().getByte(0);
-        if((firstByte & 0xF0) == 0x10) {
-            return true;
-        }
-        return false;
+        return (firstByte & 0xF0) == 0x10;
     }
 
     @Override
     public long seek(final long time) {
         logger.debug("trying to seek to: {}", time);
-        if(time == 0) { // special case
+
+        if (time == 0) { // special case
             try {
                 in.position(mediaStartPosition);
                 return 0;
@@ -105,33 +106,36 @@ public class FlvReader implements RtmpReader {
                 throw new RuntimeException(e);
             }
         }
+
         final long start = getTimePosition();
-        if(time > start) {
-            while(hasNext()) {
+        if (time > start) {
+            while (hasNext()) {
                 final RtmpMessage cursor = next();
-                if(cursor.getHeader().getTime() >= time) {
+                if (cursor.getHeader().getTime() >= time) {
                     break;
                 }
             }
         } else {
-            while(hasPrev()) {
+            while (hasPrev()) {
                 final RtmpMessage cursor = prev();
-                if(cursor.getHeader().getTime() <= time) {
+                if (cursor.getHeader().getTime() <= time) {
                     next();
                     break;
                 }
             }
         }
+
         // find the closest sync frame prior
         try {
             final long checkPoint = in.position();
-            while(hasPrev()) {
+            while (hasPrev()) {
                 final RtmpMessage cursor = prev();
                 if(cursor.getHeader().isVideo() && isSyncFrame(cursor)) {
                     logger.debug("returned seek frame / position: {}", cursor);
                     return cursor.getHeader().getTime();
                 }
             }
+
             // could not find a sync frame !
             // TODO better handling, what if file is audio only
             in.position(checkPoint);
@@ -165,42 +169,37 @@ public class FlvReader implements RtmpReader {
 
     @Override
     public RtmpMessage next() {
-        if(aggregateDuration <= 0) {
+        if (aggregateDuration <= 0) {
             return new FlvAtom(in);
         }
+
         final ChannelBuffer out = ChannelBuffers.dynamicBuffer();
         int firstAtomTime = -1;
-        while(hasNext()) {
+        while (hasNext()) {
             final FlvAtom flvAtom = new FlvAtom(in);
             final int currentAtomTime = flvAtom.getHeader().getTime();
-            if(firstAtomTime == -1) {
+            if (firstAtomTime == -1) {
                 firstAtomTime = currentAtomTime;
             }
+
             final ChannelBuffer temp = flvAtom.write();
-            if(out.readableBytes() + temp.readableBytes() > AGGREGATE_SIZE_LIMIT) {
+            if (out.readableBytes() + temp.readableBytes() > AGGREGATE_SIZE_LIMIT) {
                 prev();
                 break;
             }
+
             out.writeBytes(temp);
-            if(currentAtomTime - firstAtomTime > aggregateDuration) {
+            if (currentAtomTime - firstAtomTime > aggregateDuration) {
                 break;
             }
         }
+
         return new Aggregate(firstAtomTime, out);
     }
 
     @Override
     public void close() {
         in.close();
-    }
-
-    public static void main(String[] args) {
-        FlvReader reader = new FlvReader("home/apps/vod/IronMan.flv");
-        while(reader.hasNext()) {
-            RtmpMessage message = reader.next();
-            logger.debug("{} {}", message, ChannelBuffers.hexDump(message.encode()));
-        }
-        reader.close();
     }
 
 }

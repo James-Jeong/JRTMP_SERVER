@@ -19,12 +19,12 @@
 
 package rtmp.flazr.rtmp.message;
 
+import org.jboss.netty.buffer.ChannelBuffer;
 import rtmp.flazr.amf.Amf0Object;
 import rtmp.flazr.io.f4v.MovieInfo;
 import rtmp.flazr.io.f4v.TrackInfo;
 import rtmp.flazr.io.f4v.box.STSD;
 import rtmp.flazr.rtmp.RtmpHeader;
-import org.jboss.netty.buffer.ChannelBuffer;
 
 import java.util.*;
 

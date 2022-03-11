@@ -21,12 +21,14 @@ package rtmp.flazr.rtmp;
 
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.channel.*;
+import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.Channels;
+import org.jboss.netty.channel.MessageEvent;
+import org.jboss.netty.channel.SimpleChannelDownstreamHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rtmp.flazr.rtmp.message.ChunkSize;
 import rtmp.flazr.rtmp.message.Control;
-import rtmp.flazr.rtmp.message.MessageType;
 
 public class RtmpEncoder extends SimpleChannelDownstreamHandler {
 

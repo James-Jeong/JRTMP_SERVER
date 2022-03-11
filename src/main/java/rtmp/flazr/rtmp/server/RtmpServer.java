@@ -19,8 +19,6 @@
 
 package rtmp.flazr.rtmp.server;
 
-import rtmp.flazr.rtmp.RtmpConfig;
-import rtmp.flazr.util.StopMonitor;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.ChannelFactory;
 import org.jboss.netty.channel.group.ChannelGroup;
@@ -31,6 +29,8 @@ import org.jboss.netty.util.HashedWheelTimer;
 import org.jboss.netty.util.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import rtmp.flazr.rtmp.RtmpConfig;
+import rtmp.flazr.util.StopMonitor;
 import rtmp.flazr.util.Utils;
 
 import java.net.InetSocketAddress;

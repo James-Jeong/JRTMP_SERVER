@@ -19,8 +19,8 @@
 
 package rtmp.flazr.io.f4v;
 
-import rtmp.flazr.io.f4v.box.*;
 import org.jboss.netty.buffer.ChannelBuffer;
+import rtmp.flazr.io.f4v.box.*;
 
 public enum BoxType {
 

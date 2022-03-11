@@ -19,11 +19,11 @@
 
 package rtmp.flazr.io.f4v.box;
 
-import rtmp.flazr.io.f4v.Payload;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import rtmp.flazr.io.f4v.Payload;
 
 import java.util.ArrayList;
 import java.util.List;

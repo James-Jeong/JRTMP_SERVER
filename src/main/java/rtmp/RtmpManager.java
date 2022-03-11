@@ -1,8 +1,5 @@
 package rtmp;
 
-import rtmp.flazr.rtmp.RtmpConfig;
-import rtmp.flazr.rtmp.server.ServerApplication;
-import rtmp.flazr.rtmp.server.ServerPipelineFactory;
 import config.ConfigManager;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.ChannelFactory;
@@ -13,6 +10,9 @@ import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rtmp.base.RtmpPubUnit;
+import rtmp.flazr.rtmp.RtmpConfig;
+import rtmp.flazr.rtmp.server.ServerApplication;
+import rtmp.flazr.rtmp.server.ServerPipelineFactory;
 import service.AppInstance;
 import service.StreamIdResourceManager;
 

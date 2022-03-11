@@ -19,9 +19,9 @@
 
 package rtmp.flazr.rtmp.message;
 
+import org.jboss.netty.buffer.ChannelBuffer;
 import rtmp.flazr.amf.Amf0Object;
 import rtmp.flazr.rtmp.RtmpHeader;
-import org.jboss.netty.buffer.ChannelBuffer;
 
 import java.util.Arrays;
 import java.util.Map;

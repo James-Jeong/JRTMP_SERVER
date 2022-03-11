@@ -19,10 +19,10 @@
 
 package rtmp.flazr.rtmp;
 
+import org.jboss.netty.buffer.ChannelBuffer;
 import rtmp.flazr.rtmp.message.MessageType;
 import rtmp.flazr.util.Utils;
 import rtmp.flazr.util.ValueToEnum;
-import org.jboss.netty.buffer.ChannelBuffer;
 
 public class RtmpHeader {
 
@@ -272,16 +272,14 @@ public class RtmpHeader {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append('[').append(headerType.ordinal());
-        sb.append(' ').append(messageType);
-        sb.append(" c").append(channelId);
-        sb.append(" #").append(streamId);
-        sb.append(" t").append(time);
-        sb.append(" (").append(deltaTime);
-        sb.append(") s").append(size);
-        sb.append(']');
-        return sb.toString();
+        return "[HEADER_TYPE=" + headerType.name() +
+                ", TYPE=" + messageType +
+                ", CHANNEL_ID=" + channelId +
+                ", STREAM_ID=" + streamId +
+                ", TIME=" + time +
+                ", DELTA_TIME=" + deltaTime +
+                ", SIZE=" + size +
+                ']';
     }
 
 }

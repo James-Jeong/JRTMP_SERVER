@@ -19,10 +19,10 @@
 
 package rtmp.flazr.amf;
 
-import rtmp.flazr.util.ValueToEnum;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import rtmp.flazr.util.ValueToEnum;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;

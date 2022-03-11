@@ -19,13 +19,13 @@
 
 package rtmp.flazr.io.f4v;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import rtmp.flazr.io.BufferReader;
 import rtmp.flazr.io.f4v.box.FTYP;
 import rtmp.flazr.io.f4v.box.MVHD;
 import rtmp.flazr.io.f4v.box.STSD.AudioSD;
 import rtmp.flazr.io.f4v.box.STSD.VideoSD;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;

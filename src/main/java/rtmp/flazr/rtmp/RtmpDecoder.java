@@ -19,7 +19,6 @@
 
 package rtmp.flazr.rtmp;
 
-import rtmp.flazr.rtmp.RtmpDecoder.DecoderState;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
@@ -27,6 +26,7 @@ import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.handler.codec.replay.ReplayingDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import rtmp.flazr.rtmp.RtmpDecoder.DecoderState;
 import rtmp.flazr.rtmp.message.ChunkSize;
 import rtmp.flazr.rtmp.message.MessageType;
 

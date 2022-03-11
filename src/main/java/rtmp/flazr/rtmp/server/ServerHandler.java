@@ -19,6 +19,12 @@
 
 package rtmp.flazr.rtmp.server;
 
+import org.jboss.netty.channel.*;
+import org.jboss.netty.channel.group.ChannelGroup;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import rtmp.RtmpManager;
+import rtmp.base.RtmpPubUnit;
 import rtmp.flazr.amf.Amf0Object;
 import rtmp.flazr.rtmp.RtmpMessage;
 import rtmp.flazr.rtmp.RtmpPublisher;
@@ -26,12 +32,6 @@ import rtmp.flazr.rtmp.RtmpReader;
 import rtmp.flazr.rtmp.RtmpWriter;
 import rtmp.flazr.rtmp.message.*;
 import rtmp.flazr.util.ChannelUtils;
-import org.jboss.netty.channel.*;
-import org.jboss.netty.channel.group.ChannelGroup;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import rtmp.RtmpManager;
-import rtmp.base.RtmpPubUnit;
 import service.StreamIdResourceManager;
 
 import java.net.InetSocketAddress;
@@ -101,12 +101,14 @@ public class ServerHandler extends SimpleChannelHandler {
     @Override
     public void channelClosed(final ChannelHandlerContext ctx, final ChannelStateEvent e) {
         logger.info("channel closed: {}", e);
-        if(publisher != null) {
+        if (publisher != null) {
             publisher.close();
         }
-        if(recorder != null) {
+
+        if (recorder != null) {
             recorder.close();
         }
+
         unpublishIfLive();
     }
 
@@ -122,13 +124,15 @@ public class ServerHandler extends SimpleChannelHandler {
 
     @Override
     public void messageReceived(final ChannelHandlerContext ctx, final MessageEvent me)throws Exception{
-        if(publisher != null && publisher.handle(me)) {
+        if (publisher != null && publisher.handle(me)) {
             return;
         }
+
         final Channel channel = me.getChannel();
         final RtmpMessage message = (RtmpMessage) me.getMessage();
+
         bytesRead += message.getHeader().getSize();
-        if((bytesRead - bytesReadLastSent) > bytesReadWindow) {
+        if ((bytesRead - bytesReadLastSent) > bytesReadWindow) {
             /*if(logger.isDebugEnabled()){
                 logger.debug("sending bytes read ack after: {}", bytesRead);
             }*/
@@ -136,7 +140,8 @@ public class ServerHandler extends SimpleChannelHandler {
             channel.write(ack);
             bytesReadLastSent = bytesRead;
         }
-        switch(message.getHeader().getMessageType()) {
+
+        switch (message.getHeader().getMessageType()) {
             case CHUNK_SIZE: // handled by decoder
                 break;
             case CONTROL:
@@ -214,12 +219,13 @@ public class ServerHandler extends SimpleChannelHandler {
                     subscriberStream.addConfigMessage(message);
                 }
             case AGGREGATE:
+                //logger.debug("<AGGREGATE HEADER> [{}]", message.getHeader());
                 broadcast(message);
                 break;
             case BYTES_READ:
-                final BytesRead bytesReadByClient = (BytesRead) message;
+                /*final BytesRead bytesReadByClient = (BytesRead) message;
                 long byteRead=bytesReadByClient.getValue();
-                /*if(logger.isDebugEnabled()){
+                if(logger.isDebugEnabled()){
                     logger.debug("client bytes read:{}",byteRead);
                 }*/
                 break;
@@ -354,6 +360,7 @@ public class ServerHandler extends SimpleChannelHandler {
 
             if (!videoConfigPresent) {
                 writeToStream(channel, Video.empty());
+                logger.info("videoConfigPresent: [false]");
             }
 
             stream.getSubscribers().add(channel);
@@ -380,6 +387,7 @@ public class ServerHandler extends SimpleChannelHandler {
                 }
             };
         }
+
         publisher.start(channel, playStart, playLength, getStartMessages(playResetCommand));
     }
 
@@ -458,7 +466,7 @@ public class ServerHandler extends SimpleChannelHandler {
             channel.write(Control.streamBegin(streamId));
             final ServerStream.PublishType publishType = subscriberStream.getPublishType();
             logger.info("created publish stream: {}", subscriberStream);
-            switch(publishType) {
+            switch (publishType) {
                 case LIVE:
                     final ChannelGroup subscribers = subscriberStream.getSubscribers();
                     subscribers.write(Command.publishNotify(streamId));
@@ -477,7 +485,7 @@ public class ServerHandler extends SimpleChannelHandler {
             }
         } else { // un-publish
             final boolean publish = (Boolean) command.getArg(0);
-            if(!publish) {
+            if (!publish) {
                 /////////////////////////////
                 RtmpManager.getInstance().deleteRtmpPubUnit(streamId);
                 StreamIdResourceManager.getInstance().restoreStreamId(streamId);

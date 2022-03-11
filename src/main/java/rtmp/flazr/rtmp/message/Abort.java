@@ -1,8 +1,8 @@
 package rtmp.flazr.rtmp.message;
 
-import rtmp.flazr.rtmp.RtmpHeader;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
+import rtmp.flazr.rtmp.RtmpHeader;
 
 public class Abort extends AbstractMessage {
 

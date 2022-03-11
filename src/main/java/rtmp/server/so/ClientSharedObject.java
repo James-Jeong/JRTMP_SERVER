@@ -20,6 +20,8 @@ package rtmp.server.so;
  */
 
 import org.jboss.netty.channel.Channel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import rtmp.server.api.IAttributeStore;
 import rtmp.server.api.event.IEvent;
 import rtmp.server.api.event.IEventDispatcher;
@@ -27,8 +29,6 @@ import rtmp.server.api.event.IEventListener;
 import rtmp.server.api.so.IClientSharedObject;
 import rtmp.server.api.so.ISharedObjectListener;
 import rtmp.server.so.ISharedObjectEvent.Type;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;

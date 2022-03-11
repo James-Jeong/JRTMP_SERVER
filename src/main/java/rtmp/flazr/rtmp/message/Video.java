@@ -19,9 +19,9 @@
 
 package rtmp.flazr.rtmp.message;
 
-import rtmp.flazr.rtmp.RtmpHeader;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
+import rtmp.flazr.rtmp.RtmpHeader;
 import rtmp.flazr.util.Utils;
 
 public class Video extends DataMessage {

@@ -19,14 +19,14 @@
 
 package rtmp.flazr.rtmp.server;
 
-import rtmp.flazr.rtmp.RtmpHandshake;
-import rtmp.flazr.rtmp.RtmpPublisher;
-import rtmp.flazr.util.Utils;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.*;
 import org.jboss.netty.handler.codec.frame.FrameDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import rtmp.flazr.rtmp.RtmpHandshake;
+import rtmp.flazr.rtmp.RtmpPublisher;
+import rtmp.flazr.util.Utils;
 
 import java.util.Arrays;
 
@@ -65,7 +65,7 @@ public class ServerHandshakeHandler extends FrameDecoder implements ChannelDowns
             handshake.decodeClient2(in);
             handshakeDone = true;
             logger.debug("handshake done, rtmpe: {}", rtmpe);
-            if(Arrays.equals(handshake.getPeerVersion(), Utils.fromHex("00000000"))) {
+            if (Arrays.equals(handshake.getPeerVersion(), Utils.fromHex("00000000"))) {
                 final ServerHandler serverHandler = ctx.getPipeline().get(ServerHandler.class);
                 serverHandler.setAggregateModeEnabled(false);
                 logger.warn("old client version, disabled 'aggregate' mode");

@@ -19,11 +19,11 @@
 
 package rtmp.flazr.rtmp.message;
 
+import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBuffers;
 import rtmp.flazr.amf.Amf0Object;
 import rtmp.flazr.amf.Amf0Value;
 import rtmp.flazr.rtmp.RtmpHeader;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
 
 import java.util.ArrayList;
 import java.util.List;

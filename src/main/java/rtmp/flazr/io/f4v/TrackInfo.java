@@ -19,12 +19,12 @@
 
 package rtmp.flazr.io.f4v;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import rtmp.flazr.io.f4v.box.*;
 import rtmp.flazr.io.f4v.box.CTTS.CTTSRecord;
 import rtmp.flazr.io.f4v.box.STSC.STSCRecord;
 import rtmp.flazr.io.f4v.box.STTS.STTSRecord;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashSet;
