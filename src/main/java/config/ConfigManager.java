@@ -34,8 +34,6 @@ public class ConfigManager {
 
     // RTMP
     public static final String FIELD_FLAZR_CONF_PATH = "FLAZR_CONF_PATH";
-    public static final String FIELD_RTMP_LISTEN_IP = "RTMP_LISTEN_IP";
-    public static final String FIELD_RTMP_LISTEN_PORT = "RTMP_LISTEN_PORT";
     public static final String FIELD_RTMP_MEDIA_BASE_NAME = "RTMP_MEDIA_BASE_NAME";
 
     // AUTH
@@ -51,8 +49,6 @@ public class ConfigManager {
 
     // RTMP
     private String flazrConfPath = null;
-    private String rtmpListenIp = null;
-    private int rtmpListenPort = 0;
     private String rtmpMediaBaseName = null;
 
     // AUTH
@@ -118,24 +114,6 @@ public class ConfigManager {
         if (this.flazrConfPath == null) {
             logger.error("Fail to load [{}-{}].", SECTION_RTMP, FIELD_FLAZR_CONF_PATH);
             System.exit(1);
-        }
-
-        this.rtmpListenIp = getIniValue(SECTION_RTMP, FIELD_RTMP_LISTEN_IP);
-        if (this.rtmpListenIp == null) {
-            logger.error("Fail to load [{}-{}].", SECTION_RTMP, FIELD_RTMP_LISTEN_IP);
-            System.exit(1);
-        }
-
-        String rtmpPublishPortString = getIniValue(SECTION_RTMP, FIELD_RTMP_LISTEN_PORT);
-        if (rtmpPublishPortString == null) {
-            logger.error("Fail to load [{}-{}].", SECTION_RTMP, FIELD_RTMP_LISTEN_PORT);
-            System.exit(1);
-        } else {
-            this.rtmpListenPort = Integer.parseInt(rtmpPublishPortString);
-            if (this.rtmpListenPort <= 0 || this.rtmpListenPort > 65535) {
-                logger.error("Fail to load [{}-{}].", SECTION_RTMP, FIELD_RTMP_LISTEN_PORT);
-                System.exit(1);
-            }
         }
 
         this.rtmpMediaBaseName = getIniValue(SECTION_RTMP, FIELD_RTMP_MEDIA_BASE_NAME);
@@ -219,14 +197,6 @@ public class ConfigManager {
 
     public String getFlazrConfPath() {
         return flazrConfPath;
-    }
-
-    public String getRtmpListenIp() {
-        return rtmpListenIp;
-    }
-
-    public int getRtmpListenPort() {
-        return rtmpListenPort;
     }
 
     public String getRtmpMediaBaseName() {
