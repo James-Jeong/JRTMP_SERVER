@@ -33,6 +33,7 @@ public class ConfigManager {
     public static final String FIELD_LONG_SESSION_LIMIT_TIME = "LONG_SESSION_LIMIT_TIME";
 
     // RTMP
+    public static final String FIELD_ENABLE_PROXY = "ENABLE_PROXY";
     public static final String FIELD_FLAZR_CONF_PATH = "FLAZR_CONF_PATH";
     public static final String FIELD_RTMP_MEDIA_BASE_NAME = "RTMP_MEDIA_BASE_NAME";
 
@@ -48,6 +49,7 @@ public class ConfigManager {
     private long localSessionLimitTime = 0; // ms
 
     // RTMP
+    private boolean enableProxy = false;
     private String flazrConfPath = null;
     private String rtmpMediaBaseName = null;
 
@@ -110,6 +112,14 @@ public class ConfigManager {
      * @brief RTMP Section 을 로드하는 함수
      */
     private void loadRtmpConfig() {
+        String enableKafkaString = getIniValue(SECTION_RTMP, FIELD_ENABLE_PROXY);
+        if (enableKafkaString == null) {
+            logger.error("Fail to load [{}-{}].", SECTION_RTMP, FIELD_ENABLE_PROXY);
+            System.exit(1);
+        } else {
+            this.enableProxy = Boolean.parseBoolean(enableKafkaString);
+        }
+
         this.flazrConfPath = getIniValue(SECTION_RTMP, FIELD_FLAZR_CONF_PATH);
         if (this.flazrConfPath == null) {
             logger.error("Fail to load [{}-{}].", SECTION_RTMP, FIELD_FLAZR_CONF_PATH);
@@ -209,5 +219,9 @@ public class ConfigManager {
 
     public String getAuthBlacklistPath() {
         return authBlacklistPath;
+    }
+
+    public boolean isEnableProxy() {
+        return enableProxy;
     }
 }

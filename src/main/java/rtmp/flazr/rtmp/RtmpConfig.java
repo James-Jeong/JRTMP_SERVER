@@ -36,8 +36,14 @@ public class RtmpConfig {
 
     public static String SERVER_HOME_DIR = "home";
     public static int TIMER_TICK_SIZE = 100;
+
     public static int SERVER_PORT = 1935;
     public static int SERVER_STOP_PORT = 1934;
+
+    public static int PROXY_PORT = 8000;
+    public static int PROXY_STOP_PORT = 7999;
+    public static String PROXY_REMOTE_HOST = "127.0.0.1";
+    public static int PROXY_REMOTE_PORT = 1934;
 
     public static void configureServer(String flazrConfPath) {
         configure(flazrConfPath, Type.SERVER);
@@ -47,6 +53,16 @@ public class RtmpConfig {
     public static int configureServerStop(String flazrConfPath) {
         configure(flazrConfPath, Type.SERVER_STOP);
         return SERVER_STOP_PORT;
+    }
+
+    public static void configureProxy(String flazrConfPath) {
+        configure(flazrConfPath, Type.PROXY);
+        //addShutdownHook(PROXY_STOP_PORT);
+    }
+
+    public static int configureProxyStop(String flazrConfPath) {
+        configure(flazrConfPath, Type.PROXY_STOP);
+        return PROXY_STOP_PORT;
     }
 
     private static void configure(String flazrConfPath, Type type) {
@@ -74,6 +90,21 @@ public class RtmpConfig {
                     }
                     logger.info("home dir: '{}'", homeFile.getAbsolutePath());
                     logger.info("server port: {} (stop {})", SERVER_PORT, SERVER_STOP_PORT);
+                    break;
+                case PROXY:
+                case PROXY_STOP:
+                    Integer proxyStop = parseInt(props.getProperty("proxy.stop.port"));
+                    if(proxyStop != null) PROXY_STOP_PORT = proxyStop;
+                    if(type == Type.PROXY_STOP) {
+                        break;
+                    }
+                    Integer proxyPort = parseInt(props.getProperty("proxy.port"));
+                    if(proxyPort != null) PROXY_PORT = proxyPort;
+                    PROXY_REMOTE_HOST = props.getProperty("proxy.remote.host", "127.0.0.1");
+                    Integer proxyRemote = parseInt(props.getProperty("proxy.remote.port"));
+                    if(proxyRemote != null) PROXY_REMOTE_PORT = proxyRemote;
+                    logger.info("proxy port: {} (stop {})", PROXY_PORT, PROXY_STOP_PORT);
+                    logger.info("proxy remote host: {} port: {}", PROXY_REMOTE_HOST, PROXY_REMOTE_PORT);
                     break;
             }
         }        

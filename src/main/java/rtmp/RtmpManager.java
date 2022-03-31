@@ -6,11 +6,14 @@ import org.jboss.netty.channel.ChannelFactory;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.ChannelGroupFuture;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
+import org.jboss.netty.channel.socket.ClientSocketChannelFactory;
+import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rtmp.base.RtmpPubUnit;
 import rtmp.flazr.rtmp.RtmpConfig;
+import rtmp.flazr.rtmp.proxy.ProxyPipelineFactory;
 import rtmp.flazr.rtmp.server.ServerApplication;
 import rtmp.flazr.rtmp.server.ServerPipelineFactory;
 import service.AppInstance;
@@ -23,6 +26,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -31,6 +35,7 @@ public class RtmpManager {
     static {
         ConfigManager configManager = AppInstance.getInstance().getConfigManager();
         RtmpConfig.configureServer(configManager.getFlazrConfPath());
+        RtmpConfig.configureProxy(configManager.getFlazrConfPath());
     }
 
     ////////////////////////////////////////////////////////////
@@ -38,7 +43,7 @@ public class RtmpManager {
 
     private static RtmpManager rtmpManager = null;
 
-    private final ChannelGroup CHANNELS;
+    private final ChannelGroup channels;
     private final Map<String, ServerApplication> APPLICATIONS;
     private ChannelFactory factory = null;
 
@@ -51,11 +56,19 @@ public class RtmpManager {
 
     ////////////////////////////////////////////////////////////
     public RtmpManager() {
-        this.CHANNELS = new DefaultChannelGroup("rtmp-server-channels");
         this.APPLICATIONS = new ConcurrentHashMap<>();
 
         StreamIdResourceManager.getInstance().initResource();
-        initRtmpServer();
+
+        ConfigManager configManager = AppInstance.getInstance().getConfigManager();
+        if (configManager.isEnableProxy()) {
+            this.channels = new DefaultChannelGroup("rtmp-server-channels");
+            initRtmpProxy();
+        } else {
+            this.channels = new DefaultChannelGroup("rtmp-proxy");
+            initRtmpServer();
+        }
+
         loadAuthList();
     }
 
@@ -68,7 +81,8 @@ public class RtmpManager {
     }
 
     private void initRtmpServer() {
-        factory = new NioServerSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool());
+        Executor executor = Executors.newCachedThreadPool();
+        factory = new NioServerSocketChannelFactory(executor, executor);
         ServerBootstrap bootstrap = new ServerBootstrap(factory);
         bootstrap.setPipelineFactory(new ServerPipelineFactory());
         bootstrap.setOption("child.tcpNoDelay", true);
@@ -77,6 +91,26 @@ public class RtmpManager {
         final InetSocketAddress socketAddress = new InetSocketAddress(RtmpConfig.SERVER_PORT);
         bootstrap.bind(socketAddress);
         logger.info("[RtmpManager] RTMP Server started, listening on: [{}]", socketAddress);
+    }
+
+    private void initRtmpProxy() {
+        Executor executor = Executors.newCachedThreadPool();
+        factory = new NioServerSocketChannelFactory(executor, executor);
+        ServerBootstrap bootstrap = new ServerBootstrap(factory);
+        /*bootstrap.setOption("child.tcpNoDelay", true);
+        bootstrap.setOption("child.keepAlive", true);*/
+
+        ClientSocketChannelFactory clientSocketChannelFactory = new NioClientSocketChannelFactory(executor, executor);
+        bootstrap.setPipelineFactory(
+                new ProxyPipelineFactory(
+                        clientSocketChannelFactory,
+                        RtmpConfig.PROXY_REMOTE_HOST, RtmpConfig.PROXY_REMOTE_PORT
+                )
+        );
+
+        InetSocketAddress socketAddress = new InetSocketAddress(RtmpConfig.PROXY_PORT);
+        bootstrap.bind(socketAddress);
+        logger.info("[RtmpManager] RTMP Proxy started, listening on {}", socketAddress);
     }
 
     public void loadAuthList() {
@@ -123,14 +157,20 @@ public class RtmpManager {
 
         deleteAllRtmpPubUnits();
 
-        final ChannelGroupFuture future = CHANNELS.close();
+        final ChannelGroupFuture future = channels.close();
         logger.info("[RtmpManager] Closing rtmp channels...");
         future.awaitUninterruptibly();
         /*if (factory != null) {
             logger.info("[RtmpManager] Releasing rtmp resources...");
             factory.releaseExternalResources();
         }*/
-        logger.info("[RtmpManager] RTMP Server stopped.");
+
+        ConfigManager configManager = AppInstance.getInstance().getConfigManager();
+        if (configManager.isEnableProxy()) {
+            logger.info("[RtmpManager] RTMP Server stopped.");
+        } else {
+            logger.info("[RtmpManager] RTMP Proxy stopped.");
+        }
     }
     ////////////////////////////////////////////////////////////
 
@@ -208,8 +248,8 @@ public class RtmpManager {
     ////////////////////////////////////////////////////////////
 
     ////////////////////////////////////////////////////////////
-    public ChannelGroup getCHANNELS() {
-        return CHANNELS;
+    public ChannelGroup getChannels() {
+        return channels;
     }
 
     public Map<String, ServerApplication> getAPPLICATIONS() {

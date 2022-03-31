@@ -5,7 +5,7 @@ SERVICE_NAME=urtmp_server
 PATH_TO_JAR=$SERVICE_HOME/lib/JRTMP_SERVER.jar
 JAVA_CONF=$SERVICE_HOME/config/user_conf.ini
 JAVA_OPT="-Dlogback.configurationFile=$SERVICE_HOME/config/logback.xml"
-JAVA_OPT="$JAVA_OPT -XX:+UseG1GC -XX:G1RSetUpdatingPauseTimePercent=5 -XX:MaxGCPauseMillis=500 -verbose:gc -Xlog:gc=debug:file=$SERVICE_HOME/logs/gc.log:time,uptime,level,tags:filecount=5,filesize=100m"
+JAVA_OPT="$JAVA_OPT -XX:+UseG1GC -XX:G1RSetUpdatingPauseTimePercent=5 -XX:MaxGCPauseMillis=500 -XX:+UseLargePages -verbosegc -Xms4G -Xmx4G -verbose:gc -Xlog:gc=debug:file=$SERVICE_HOME/logs/gc.log:time,uptime,level,tags:filecount=5,filesize=100m"
 
 function exec_start() {
         PID=`ps -ef | grep java | grep RtmpServerMain | awk '{print $2}'`
