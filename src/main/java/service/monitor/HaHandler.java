@@ -3,6 +3,7 @@ package service.monitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rtmp.RtmpManager;
+import service.AppInstance;
 import service.scheduler.job.Job;
 import service.scheduler.schedule.ScheduleManager;
 import service.system.SystemManager;
@@ -36,10 +37,16 @@ public class HaHandler extends Job {
         String cpuUsageStr = systemManager.getCpuUsage();
         String memoryUsageStr = systemManager.getHeapMemoryUsage();
 
-        logger.debug("| cpu=[{}], mem=[{}], thread=[{}] | RtmpPubUnitCount=[{}]",
-                cpuUsageStr, memoryUsageStr, Thread.activeCount(),
-                RtmpManager.getInstance().getRtmpPubUnitMapSize()
-        );
+        if (AppInstance.getInstance().getConfigManager().isEnableProxy()) {
+            logger.debug("| [PROXY] cpu=[{}], mem=[{}], thread=[{}]",
+                    cpuUsageStr, memoryUsageStr, Thread.activeCount()
+            );
+        } else {
+            logger.debug("| [SERVER] cpu=[{}], mem=[{}], thread=[{}] | RtmpPubUnitCount=[{}]",
+                    cpuUsageStr, memoryUsageStr, Thread.activeCount(),
+                    RtmpManager.getInstance().getRtmpPubUnitMapSize()
+            );
+        }
     }
 
 }
