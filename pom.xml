@@ -10,6 +10,9 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <service.home>/home/atmos</service.home>
+        <service.group>atmos</service.group>
+        <service.user>atmos</service.user>
         <rpm.release.version>1</rpm.release.version>
         <rpm.binary.dir>target/rpm/${project.artifactId}/RPMS/noarch</rpm.binary.dir>
         <rpm.binary.name>${project.artifactId}-${project.version}-${rpm.release.version}.noarch.rpm</rpm.binary.name>
@@ -218,15 +221,15 @@
                     <targetOS>linux</targetOS>
                     <defaultDirmode>755</defaultDirmode>
                     <defaultFilemode>644</defaultFilemode>
-                    <defaultUsername>uangel</defaultUsername>
-                    <defaultGroupname>uangel</defaultGroupname>
+                    <defaultUsername>${service.user}</defaultUsername>
+                    <defaultGroupname>${service.group}</defaultGroupname>
                     <mappings>
                         <mapping>
-                            <directory>/home/uangel/urtmp_server/</directory>
+                            <directory>${service.home}/urtmp_server/</directory>
                         </mapping>
 
                         <mapping>
-                            <directory>/home/uangel/urtmp_server/lib/</directory>
+                            <directory>${service.home}/urtmp_server/lib/</directory>
                             <sources>
                                 <source>
                                     <location>${project.basedir}/out/artifacts/JRTMP_SERVER_jar/</location>
@@ -235,7 +238,7 @@
                         </mapping>
 
                         <mapping>
-                            <directory>/home/uangel/urtmp_server/bin/</directory>
+                            <directory>${service.home}/urtmp_server/bin/</directory>
                             <filemode>755</filemode>
                             <directoryIncluded>false</directoryIncluded>
                             <sources>
@@ -247,7 +250,7 @@
 
                         <mapping>
                             <configuration>noreplace</configuration>
-                            <directory>/home/uangel/urtmp_server/config/</directory>
+                            <directory>${service.home}/urtmp_server/config/</directory>
                             <sources>
                                 <source>
                                     <location>${project.basedir}/src/main/resources/config/user_conf.ini</location>
@@ -262,13 +265,13 @@
                         </mapping>
 
                         <mapping>
-                            <directory>/home/uangel/urtmp_server/logs/</directory>
+                            <directory>${service.home}/urtmp_server/logs/</directory>
                             <filemode>755</filemode>
                         </mapping>
 
                         <mapping>
                             <configuration>noreplace</configuration>
-                            <directory>/home/uangel/urtmp_server/auth/</directory>
+                            <directory>${service.home}/urtmp_server/auth/</directory>
                             <sources>
                                 <source>
                                     <location>${project.basedir}/src/main/resources/auth/whitelist.txt</location>
