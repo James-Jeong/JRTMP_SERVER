@@ -342,7 +342,7 @@ public class ServerHandler extends SimpleChannelHandler {
                 clientPlayName, playStart, playLength, playReset
         );
 
-        if(stream.isLive()) {
+        if (stream.isLive()) {
             for (final RtmpMessage message : getStartMessages(playResetCommand)) {
                 writeToStream(channel, message);
             }

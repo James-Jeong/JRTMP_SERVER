@@ -53,6 +53,11 @@ public class JobScheduler {
                 return false;
             }
 
+            if (scheduleMap.get(scheduleUnitKey + ":" + job.getName()) != null) {
+                logger.warn("[JobScheduler({})] Job is already scheduled. ({})", scheduleUnitKey, job.getName());
+                return false;
+            }
+
             JobAdder jobAdder = new JobAdder(this, job, curExecutorIndex);
             jobAdder.run();
             curExecutorIndex++;
@@ -144,10 +149,6 @@ public class JobScheduler {
 
     public int getScheduledJobCount() {
         return scheduleMap.size();
-    }
-
-    public int getCurExecutorIndex() {
-        return curExecutorIndex;
     }
 
     @Override
