@@ -23,6 +23,7 @@ import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import rtmp.flazr.rtmp.client.ClientOptions;
 import rtmp.flazr.util.Utils;
 
 import javax.crypto.Cipher;
@@ -178,8 +179,17 @@ public class RtmpHandshake {
     private byte[] swfvBytes;
 
     private ChannelBuffer peerPartOne;
+
     public RtmpHandshake() {}
 
+    public RtmpHandshake(ClientOptions session) {
+        this.rtmpe = session.isRtmpe();
+        this.swfHash = session.getSwfHash();
+        this.swfSize = session.getSwfSize();
+        if(session.getClientVersionToUse() != null) {
+            this.clientVersionToUse = session.getClientVersionToUse();
+        }
+    }
 
     public byte[] getSwfvBytes() {
         return swfvBytes;

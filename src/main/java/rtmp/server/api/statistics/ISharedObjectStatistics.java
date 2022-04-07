@@ -1,4 +1,4 @@
-package rtmp.server.api.statistics;
+package rtmp.red5.api.statistics;
 
 /*
  * RED5 Open Source Flash Server - http://code.google.com/p/red5/

@@ -46,10 +46,10 @@ public class FlvWriter implements RtmpWriter {
     }
 
     public FlvWriter(final int seekTime, final String fileName) {
-        this.seekTime = seekTime < 0 ? 0 : seekTime;
+        this.seekTime = Math.max(seekTime, 0);
         this.startTime = System.currentTimeMillis();
         if(fileName == null) {
-            logger.info("save file notspecified, will only consume stream");
+            logger.debug("save file not specified, will only consume stream");
             out = null;
             return;
         }
@@ -59,7 +59,7 @@ public class FlvWriter implements RtmpWriter {
             FileOutputStream fos = new FileOutputStream(file);
             out = fos.getChannel();
             out.write(FlvAtom.flvHeader().toByteBuffer());
-            logger.info("opened file for writing: {}", file.getAbsolutePath());
+            logger.debug("opened file for writing: {}", file.getAbsolutePath());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -78,7 +78,8 @@ public class FlvWriter implements RtmpWriter {
             logger.warn("no media was written, closed file");
             return;
         }
-        logger.info("finished in {} seconds, media duration: {} seconds (seek time: {})",
+
+        logger.debug("finished in {} seconds, media duration: {} seconds (seek time: {})",
                 (System.currentTimeMillis() - startTime) / 1000,
                 (channelTimes[primaryChannel] - seekTime) / 1000,
                 seekTime / 1000
@@ -88,7 +89,7 @@ public class FlvWriter implements RtmpWriter {
     private void logWriteProgress() {
         final int seconds = (channelTimes[primaryChannel] - seekTime) / 1000;
         if (seconds >= lastLoggedSeconds + 10) {
-            logger.info("write progress: " + seconds + " seconds");
+            logger.info("write progress: {}sec", seconds);
             lastLoggedSeconds = seconds - (seconds % 10);
         }
     }
@@ -103,14 +104,13 @@ public class FlvWriter implements RtmpWriter {
                 final int absoluteTime = flvAtom.getHeader().getTime();
                 channelTimes[primaryChannel] = absoluteTime;
                 write(flvAtom);
-                // logger.debug("aggregate atom: {}", flvAtom);
                 logWriteProgress();
             }
         } else { // METADATA / AUDIO / VIDEO
             final int channelId = header.getChannelId();
             channelTimes[channelId] = seekTime + header.getTime();
             if(primaryChannel == -1 && (header.isAudio() || header.isVideo())) {
-                logger.info("first media packet for channel: {}", header);
+                logger.debug("first media packet for channel: {}", header);
                 primaryChannel = channelId;
             }
             if(header.getSize() <= 2) {
@@ -124,9 +124,8 @@ public class FlvWriter implements RtmpWriter {
     }
 
     private void write(final FlvAtom flvAtom) {
-        if(logger.isDebugEnabled()) {
-            logger.debug("writing: {}", flvAtom);
-        }
+        if(logger.isTraceEnabled()) { logger.trace("writing: {}", flvAtom); }
+
         if(out == null) {
             return;
         }

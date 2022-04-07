@@ -51,6 +51,8 @@ public abstract class RtmpPublisher {
     private int playLength = -1;
     private boolean paused;
     private int bufferDuration;
+
+    private int channelId = 8;
     ///////////////////////////////////////////////////////
 
     ///////////////////////////////////////////////////////
@@ -229,6 +231,7 @@ public abstract class RtmpPublisher {
 
         timePosition = header.getTime();
         header.setStreamId(streamId);
+        header.setChannelId(channelId);
 
         final ChannelFuture future = channel.write(message);
         future.addListener(cf -> {
@@ -332,6 +335,10 @@ public abstract class RtmpPublisher {
 
     public int getBufferDuration() {
         return bufferDuration;
+    }
+
+    public void setChannelId(int channelId) {
+        this.channelId  = channelId;
     }
     ///////////////////////////////////////////////////////
 
