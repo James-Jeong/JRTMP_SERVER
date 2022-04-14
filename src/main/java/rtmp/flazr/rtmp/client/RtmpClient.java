@@ -25,6 +25,7 @@ import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import rtmp.flazr.rtmp.client.dash.DashManager;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executor;
@@ -35,11 +36,13 @@ public class RtmpClient {
     private static final Logger logger = LoggerFactory.getLogger(RtmpClient.class);
 
     public static void main(String[] args) {
-        args = new String[] {
+        DashManager.getInstance().start();
+
+        /*args = new String[] {
                 "-version", "00000000",
                 "-app", "live",
                 "-buffer", "0",
-                "rtmp://192.168.5.225:1950/live/jamesj", "/Users/jamesj/GIT_PROJECTS/JRTMP_SERVER/test_stream/test_1.flv"
+                "rtmp://192.168.5.225:1935/live/jamesj", "/Users/jamesj/GIT_PROJECTS/JRTMP_SERVER/test_stream/test_1.flv"
         };
 
         final ClientOptions options = new ClientOptions();
@@ -50,7 +53,7 @@ public class RtmpClient {
         final int count = options.getLoad();
         if(count == 1 && options.getClientOptionsList() == null) {
             connect(options);
-        }
+        }*/
     }
 
     public static void connect(final ClientOptions options) {

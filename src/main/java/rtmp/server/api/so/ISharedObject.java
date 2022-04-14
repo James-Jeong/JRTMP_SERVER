@@ -19,7 +19,6 @@ package rtmp.server.api.so;
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
  */
 
-import rtmp.server.api.statistics.ISharedObjectStatistics;
 
 /**
  * Serverside access to shared objects.
@@ -61,6 +60,6 @@ public interface ISharedObject extends ISharedObjectBase {
 	 * 
 	 * @return statistics
 	 */
-	public ISharedObjectStatistics getStatistics();
+	public rtmp.red5.api.statistics.ISharedObjectStatistics getStatistics();
 	
 }

@@ -27,7 +27,6 @@ import rtmp.flazr.rtmp.RtmpHeader;
 import rtmp.server.AttributeStore;
 import rtmp.server.api.IAttributeStore;
 import rtmp.server.api.event.IEventListener;
-import rtmp.server.api.statistics.ISharedObjectStatistics;
 import rtmp.server.api.statistics.support.StatisticsCounter;
 import rtmp.server.net.rtmp.message.Constants;
 import rtmp.server.so.ISharedObjectEvent.Type;
@@ -59,7 +58,7 @@ import static rtmp.server.api.so.ISharedObject.TYPE;
  * All access to methods that change properties in the SO must be properly
  * synchronized for multi-threaded access.
  */
-public class SharedObject extends AttributeStore implements ISharedObjectStatistics, Constants {
+public class SharedObject extends AttributeStore implements rtmp.red5.api.statistics.ISharedObjectStatistics, Constants {
 	/**
 	 * Logger
 	 */
