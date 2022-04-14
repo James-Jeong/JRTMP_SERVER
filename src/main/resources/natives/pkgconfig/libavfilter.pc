@@ -5,9 +5,9 @@ includedir=/usr/local/include
 
 Name: libavfilter
 Description: FFmpeg audio/video filtering library
-Version: 8.27.100
+Version: 8.31.100
 Requires: 
-Requires.private: libavutil >= 57.21.100
+Requires.private: libavutil >= 57.24.101
 Conflicts:
 Libs: -L${libdir}  -lavfilter 
 Libs.private: -pthread -lm

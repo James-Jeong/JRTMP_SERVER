@@ -35,7 +35,7 @@ public class DashManager {
             NativeLoader.loadLibrary("avfilter");
             NativeLoader.loadLibrary("avformat");
             NativeLoader.loadLibrary("avutil");
-            NativeLoader.loadLibrary("gpac");
+            //NativeLoader.loadLibrary("gpac");
 
             logger.debug("[DashManager] Success to start.");
         } catch (Exception e) {
