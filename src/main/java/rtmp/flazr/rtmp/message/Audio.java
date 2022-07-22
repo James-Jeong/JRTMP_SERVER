@@ -26,7 +26,7 @@ import rtmp.flazr.rtmp.RtmpHeader;
 public class Audio extends DataMessage {
 
     @Override
-    public boolean isConfig() { // TODO now hard coded for mp4a
+    public boolean isConfig() { // now hard coded for mp4a
         return data.readableBytes() > 3 && data.getInt(0) == 0xaf001310;
     }
 

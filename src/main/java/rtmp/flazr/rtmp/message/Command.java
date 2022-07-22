@@ -22,11 +22,8 @@ package rtmp.flazr.rtmp.message;
 import org.jboss.netty.buffer.ChannelBuffer;
 import rtmp.flazr.amf.Amf0Object;
 import rtmp.flazr.rtmp.RtmpHeader;
-import rtmp.flazr.rtmp.client.ClientOptions;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -41,18 +38,18 @@ public abstract class Command extends AbstractMessage {
     protected Amf0Object object;
     protected Object[] args;
 
-    public Command(RtmpHeader header, ChannelBuffer in) {
+    protected Command(RtmpHeader header, ChannelBuffer in) {
         super(header, in);
     }
 
-    public Command(int transactionId, String name, Amf0Object object, Object ... args) {
+    protected Command(int transactionId, String name, Amf0Object object, Object ... args) {
         this.transactionId = transactionId;
         this.name = name;
         this.object = object;
         this.args = args;
     }
 
-    public Command(String name, Amf0Object object, Object ... args) {
+    protected Command(String name, Amf0Object object, Object ... args) {
         this(0, name, object, args);
     }
 
@@ -73,8 +70,7 @@ public abstract class Command extends AbstractMessage {
 
     //==========================================================================
 
-    public static enum OnStatus {
-
+    public enum OnStatus {
         ERROR, STATUS, WARNING;
 
         public static OnStatus parse(final String raw) {
@@ -84,14 +80,15 @@ public abstract class Command extends AbstractMessage {
         public String asString() {
             return "_" + this.name().toLowerCase();
         }
-
     }
 
     private static Amf0Object onStatus(final OnStatus level, final String code,
-                                       final String description, final String details, final Pair ... pairs) {
+            final String description, final String details, final Pair ... pairs) {
+
         final Amf0Object object = object(
-                pair("level", level.asString()),
-                pair("code", code));
+            pair("level", level.asString()),
+            pair("code", code));
+
         if(description != null) {
             object.put("description", description);
         }
@@ -102,7 +99,8 @@ public abstract class Command extends AbstractMessage {
     }
 
     private static Amf0Object onStatus(final OnStatus level, final String code,
-                                       final String description, final Pair ... pairs) {
+            final String description, final Pair ... pairs) {
+
         return onStatus(level, code, description, null, pairs);
     }
 
@@ -112,62 +110,29 @@ public abstract class Command extends AbstractMessage {
 
     //==========================================================================
 
-    public static Command connect(ClientOptions options) {
-        Amf0Object object = object(
-                AbstractMessage.pair("app", options.getAppName()),
-                AbstractMessage.pair("flashVer", "LNX 11,1,102,55"),
-                AbstractMessage.pair("tcUrl", options.getTcUrl()),
-                AbstractMessage.pair("fpad", false),
-                AbstractMessage.pair("capabilities", 239.0),
-                AbstractMessage.pair("audioCodecs", 3575.0),
-                AbstractMessage.pair("videoCodecs", 252.0),
-                AbstractMessage.pair("videoFunction", 1.0),
-                AbstractMessage.pair("objectEncoding", 0.0));
-        if(options.getParams() != null) {
-            object.putAll(options.getParams());
-        }
-        return new CommandAmf0("connect", object, options.getArgs());
-    }
 
     public static Command connectSuccess(int transactionId) {
         Map<String, Object> object = onStatus(OnStatus.STATUS,
-                "NetConnection.Connect.Success", "Connection succeeded.",
-                pair("fmsVer", "FMS/3,5,1,516"),
-                pair("capabilities", 31.0),
-                pair("mode", 1.0),
-                pair("objectEncoding", 0.0));
-        return new CommandAmf0(transactionId, "_result", null, object);
+            "NetConnection.Connect.Success", "Connection succeeded.",
+            pair("fmsVer", "FMS/3,5,1,516"),
+            pair("capabilities", 31.0),
+            pair("mode", 1.0),
+            pair("objectEncoding", 0.0));
+        return new rtmp.flazr.rtmp.message.CommandAmf0(transactionId, "_result", null, object);
     }
 
     public static Command createStream() {
-        return new CommandAmf0("createStream", null);
+        return new rtmp.flazr.rtmp.message.CommandAmf0("createStream", null);
     }
 
     public static Command onBWDone() {
-        return new CommandAmf0("onBWDone", null);
+        return new rtmp.flazr.rtmp.message.CommandAmf0("onBWDone", null);
     }
 
     public static Command createStreamSuccess(int transactionId, int streamId) {
-        return new CommandAmf0(transactionId, "_result", null, streamId);
+        return new rtmp.flazr.rtmp.message.CommandAmf0(transactionId, "_result", null, streamId);
     }
 
-    public static Command play(int streamId, ClientOptions options) {
-        final List<Object> playArgs = new ArrayList<Object>();
-        playArgs.add(options.getStreamName());
-        if(options.getStart() != -2 || options.getArgs() != null) {
-            playArgs.add(options.getStart());
-        }
-        if(options.getLength() != -1 || options.getArgs() != null) {
-            playArgs.add(options.getLength());
-        }
-        if(options.getArgs() != null) {
-            playArgs.addAll(Arrays.asList(options.getArgs()));
-        }
-        Command command = new CommandAmf0("play", null, playArgs.toArray());
-        command.header.setChannelId(8);
-        command.header.setStreamId(streamId);
-        return command;
-    }
 
     private static Command playStatus(String code, String description, String playName, String clientId, Pair ... pairs) {
         Amf0Object status = onStatus(OnStatus.STATUS,
@@ -175,7 +140,7 @@ public abstract class Command extends AbstractMessage {
                 pair("details", playName),
                 pair("clientid", clientId));
         object(status, pairs);
-        Command command = new CommandAmf0("onStatus", null, status);
+        Command command = new rtmp.flazr.rtmp.message.CommandAmf0("onStatus", null, status);
         command.header.setChannelId(5);
         return command;
     }
@@ -198,7 +163,7 @@ public abstract class Command extends AbstractMessage {
     public static Command playFailed(String playName, String clientId) {
         Amf0Object status = onStatus(OnStatus.ERROR,
                 "NetStream.Play.Failed", "Stream not found");
-        Command command = new CommandAmf0("onStatus", null, status);
+        Command command = new rtmp.flazr.rtmp.message.CommandAmf0("onStatus", null, status);
         command.header.setChannelId(8);
         return command;
     }
@@ -208,7 +173,7 @@ public abstract class Command extends AbstractMessage {
                 "NetStream.Seek.Notify", "Seeking " + seekTime + " (stream ID: " + streamId + ").",
                 pair("details", playName),
                 pair("clientid", clientId));
-        Command command = new CommandAmf0("onStatus", null, status);
+        Command command = new rtmp.flazr.rtmp.message.CommandAmf0("onStatus", null, status);
         command.header.setChannelId(5);
         command.header.setStreamId(streamId);
         command.header.setTime(seekTime);
@@ -220,7 +185,7 @@ public abstract class Command extends AbstractMessage {
                 "NetStream.Pause.Notify", "Pausing " + playName,
                 pair("details", playName),
                 pair("clientid", clientId));
-        Command command = new CommandAmf0("onStatus", null, status);
+        Command command = new rtmp.flazr.rtmp.message.CommandAmf0("onStatus", null, status);
         command.header.setChannelId(5);
         return command;
     }
@@ -230,28 +195,24 @@ public abstract class Command extends AbstractMessage {
                 "NetStream.Unpause.Notify", "Unpausing " + playName,
                 pair("details", playName),
                 pair("clientid", clientId));
-        Command command = new CommandAmf0("onStatus", null, status);
+        Command command = new rtmp.flazr.rtmp.message.CommandAmf0("onStatus", null, status);
         command.header.setChannelId(5);
         return command;
     }
 
-    public static Command publish(int streamId, int channelId, ClientOptions options) { // TODO
-        Command command = new CommandAmf0("publish", null, options.getStreamName(),
-                options.getPublishType().asString());
-        command.header.setChannelId(channelId);
-        command.header.setStreamId(streamId);
+    private static Command publishStatus(OnStatus onStatus, String code, String description, String streamName, String clientId, Pair ... pairs) {
+        Amf0Object status = onStatus(onStatus,
+                code, description, streamName,
+                pair("details", streamName),
+                pair("clientid", clientId));
+        object(status, pairs);
+        Command command = new rtmp.flazr.rtmp.message.CommandAmf0("onStatus", null, status);
+        command.header.setChannelId(8);
         return command;
     }
 
     private static Command publishStatus(String code, String streamName, String clientId, Pair ... pairs) {
-        Amf0Object status = onStatus(OnStatus.STATUS,
-                code, null, streamName,
-                pair("details", streamName),
-                pair("clientid", clientId));
-        object(status, pairs);
-        Command command = new CommandAmf0("onStatus", null, status);
-        command.header.setChannelId(8);
-        return command;
+        return publishStatus(OnStatus.STATUS, code, null, streamName, clientId, pairs);
     }
 
     public static Command publishStart(String streamName, String clientId, int streamId) {
@@ -262,15 +223,23 @@ public abstract class Command extends AbstractMessage {
         return publishStatus("NetStream.Unpublish.Success", streamName, clientId);
     }
 
+    private static Command publishError(String code, String description, String streamName, String clientId, Pair ... pairs) {
+        return publishStatus(OnStatus.ERROR, code, description, streamName, clientId, pairs);
+    }
+
+    public static Command publishFailed(String streamName, String clientId, int streamId) {
+        return publishError("NetStream.Publish.Failed", "Unknown Stream Key", streamName, clientId);
+    }
+
     public static Command unpublish(int streamId) {
-        Command command = new CommandAmf0("publish", null, false);
+        Command command = new rtmp.flazr.rtmp.message.CommandAmf0("publish", null, false);
         command.header.setChannelId(8);
         command.header.setStreamId(streamId);
         return command;
     }
 
     public static Command publishBadName(int streamId) {
-        Command command = new CommandAmf0("onStatus", null,
+        Command command = new rtmp.flazr.rtmp.message.CommandAmf0("onStatus", null,
                 onStatus(OnStatus.ERROR, "NetStream.Publish.BadName", "Stream already exists."));
         command.header.setChannelId(8);
         command.header.setStreamId(streamId);
@@ -278,7 +247,7 @@ public abstract class Command extends AbstractMessage {
     }
 
     public static Command publishNotify(int streamId) {
-        Command command = new CommandAmf0("onStatus", null,
+        Command command = new rtmp.flazr.rtmp.message.CommandAmf0("onStatus", null,
                 onStatus(OnStatus.STATUS, "NetStream.Play.PublishNotify"));
         command.header.setChannelId(8);
         command.header.setStreamId(streamId);
@@ -286,7 +255,7 @@ public abstract class Command extends AbstractMessage {
     }
 
     public static Command unpublishNotify(int streamId) {
-        Command command = new CommandAmf0("onStatus", null,
+        Command command = new rtmp.flazr.rtmp.message.CommandAmf0("onStatus", null,
                 onStatus(OnStatus.STATUS, "NetStream.Play.UnpublishNotify"));
         command.header.setChannelId(8);
         command.header.setStreamId(streamId);
@@ -294,12 +263,18 @@ public abstract class Command extends AbstractMessage {
     }
 
     public static Command closeStream(int streamId) {
-        Command command = new CommandAmf0("closeStream", null);
+        Command command = new rtmp.flazr.rtmp.message.CommandAmf0("closeStream", null);
         command.header.setChannelId(8);
         command.header.setStreamId(streamId);
         return command;
     }
 
+    public static Command close(int streamId) {
+        Command command = new rtmp.flazr.rtmp.message.CommandAmf0("close", null);
+        command.header.setChannelId(8);
+        command.header.setStreamId(streamId);
+        return command;
+    }
 
 
     //==========================================================================

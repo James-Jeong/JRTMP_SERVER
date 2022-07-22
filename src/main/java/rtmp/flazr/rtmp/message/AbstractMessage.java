@@ -31,11 +31,11 @@ public abstract class AbstractMessage implements RtmpMessage {
     
     protected final RtmpHeader header;
 
-    public AbstractMessage() {
+    protected AbstractMessage() {
         header = new RtmpHeader(getMessageType());
     }
 
-    public AbstractMessage(RtmpHeader header, ChannelBuffer in) {
+    protected AbstractMessage(RtmpHeader header, ChannelBuffer in) {
         this.header = header;
         decode(in);
     }

@@ -21,48 +21,24 @@ package rtmp.flazr.rtmp;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import rtmp.flazr.util.Utils;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.Properties;
 
 public class RtmpConfig {
     
     private static final Logger logger = LoggerFactory.getLogger(RtmpConfig.class);
 
-    public enum Type { SERVER, SERVER_STOP, PROXY, PROXY_STOP }
+    public enum Type { SERVER, PROXY }
 
     public static String SERVER_HOME_DIR = "home";
     public static int TIMER_TICK_SIZE = 100;
-
     public static int SERVER_PORT = 1935;
-    public static int SERVER_STOP_PORT = 1934;
-
-    public static int PROXY_PORT = 8000;
-    public static int PROXY_STOP_PORT = 7999;
-    public static String PROXY_REMOTE_HOST = "127.0.0.1";
-    public static int PROXY_REMOTE_PORT = 1934;
 
     public static void configureServer(String flazrConfPath) {
         configure(flazrConfPath, Type.SERVER);
-        //addShutdownHook(SERVER_STOP_PORT);
-    }
-
-    public static int configureServerStop(String flazrConfPath) {
-        configure(flazrConfPath, Type.SERVER_STOP);
-        return SERVER_STOP_PORT;
-    }
-
-    public static void configureProxy(String flazrConfPath) {
-        configure(flazrConfPath, Type.PROXY);
-        //addShutdownHook(PROXY_STOP_PORT);
-    }
-
-    public static int configureProxyStop(String flazrConfPath) {
-        configure(flazrConfPath, Type.PROXY_STOP);
-        return PROXY_STOP_PORT;
     }
 
     private static void configure(String flazrConfPath, Type type) {
@@ -72,66 +48,24 @@ public class RtmpConfig {
         } else {
             logger.info("loading config from: {}", propsFile.getAbsolutePath());
             Properties props = loadProps(propsFile);
-            switch(type) {
-                case SERVER:
-                case SERVER_STOP:
-                    Integer serverStop = parseInt(props.getProperty("server.stop.port"));
-                    if(serverStop != null) SERVER_STOP_PORT = serverStop;
-                    if(type == Type.SERVER_STOP) {
-                        break;
-                    }
-                    Integer serverPort = parseInt(props.getProperty("server.port"));
-                    if(serverPort != null) SERVER_PORT = serverPort;
-                    SERVER_HOME_DIR = props.getProperty("server.home", "home");
-                    File homeFile = new File(SERVER_HOME_DIR);
-                    if(!homeFile.exists()) {
-                        logger.error("home dir does not exist, aborting: {}", homeFile.getAbsolutePath());
-                        throw new RuntimeException("home dir does not exist: " + homeFile.getAbsolutePath());
-                    }
-                    logger.info("home dir: '{}'", homeFile.getAbsolutePath());
-                    logger.info("server port: {} (stop {})", SERVER_PORT, SERVER_STOP_PORT);
-                    break;
-                case PROXY:
-                case PROXY_STOP:
-                    Integer proxyStop = parseInt(props.getProperty("proxy.stop.port"));
-                    if(proxyStop != null) PROXY_STOP_PORT = proxyStop;
-                    if(type == Type.PROXY_STOP) {
-                        break;
-                    }
-                    Integer proxyPort = parseInt(props.getProperty("proxy.port"));
-                    if(proxyPort != null) PROXY_PORT = proxyPort;
-                    PROXY_REMOTE_HOST = props.getProperty("proxy.remote.host", "127.0.0.1");
-                    Integer proxyRemote = parseInt(props.getProperty("proxy.remote.port"));
-                    if(proxyRemote != null) PROXY_REMOTE_PORT = proxyRemote;
-                    logger.info("proxy port: {} (stop {})", PROXY_PORT, PROXY_STOP_PORT);
-                    logger.info("proxy remote host: {} port: {}", PROXY_REMOTE_HOST, PROXY_REMOTE_PORT);
-                    break;
+            if (type == Type.SERVER) {
+                Integer serverPort = parseInt(props.getProperty("server.port"));
+                if (serverPort != null) SERVER_PORT = serverPort;
+                SERVER_HOME_DIR = props.getProperty("server.home", "home");
+                File homeFile = new File(SERVER_HOME_DIR);
+                if (!homeFile.exists()) {
+                    logger.error("home dir does not exist, aborting: {}", homeFile.getAbsolutePath());
+                    throw new RuntimeException("home dir does not exist: " + homeFile.getAbsolutePath());
+                }
+                logger.info("home dir: '{}'", homeFile.getAbsolutePath());
+                logger.info("server port: {}", SERVER_PORT);
             }
         }        
     }
 
-    private static class ServerShutdownHook extends Thread {
-
-        private final int port;
-
-        public ServerShutdownHook(int port) {
-            this.port = port;
-        }
-
-        @Override
-        public void run() {
-            Utils.sendStopSignal(port);
-        }
-
-    }
-
-    private static void addShutdownHook(final int port) {
-        Runtime.getRuntime().addShutdownHook(new ServerShutdownHook(port));
-    }
-
     private static Properties loadProps(final File file) {
         try {
-            final InputStream is = new FileInputStream(file);
+            final InputStream is = Files.newInputStream(file.toPath());
             final Properties props = loadProps(is);
             is.close();
             return props;

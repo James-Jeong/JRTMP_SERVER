@@ -1,8 +1,8 @@
 #!/bin/sh
 
-SERVICE_HOME=/home/uangel/urtmp_server
-SERVICE_NAME=urtmp_server
-PATH_TO_JAR=$SERVICE_HOME/lib/JRTMP_SERVER.jar
+SERVICE_HOME=/home/urtmp/jrtmp_server
+SERVICE_NAME=jrtmp_server
+PATH_TO_JAR=$SERVICE_HOME/lib/jrtmp_server-1.0.0-jar-with-dependencies.jar
 JAVA_CONF=$SERVICE_HOME/config/user_conf.ini
 JAVA_OPT="-Dlogback.configurationFile=$SERVICE_HOME/config/logback.xml"
 JAVA_OPT="$JAVA_OPT -XX:+UseG1GC -XX:G1RSetUpdatingPauseTimePercent=5 -XX:MaxGCPauseMillis=500 -XX:+UseLargePages -verbosegc -Xms4G -Xmx4G -verbose:gc -Xlog:gc=debug:file=$SERVICE_HOME/logs/gc.log:time,uptime,level,tags:filecount=5,filesize=100m"

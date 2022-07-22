@@ -179,7 +179,7 @@ public class Utils {
 			HttpResponse response = client.execute(method);
 			result = EntityUtils.toString(response.getEntity());
 		} catch (Exception e) {
-            e.printStackTrace();			
+            e.printStackTrace();
 		}
 		return result;
     }
@@ -195,20 +195,6 @@ public class Utils {
         return mac.doFinal(message);
     }
 
-    public static void sendStopSignal(int port) {
-        try {
-            Socket s = new Socket(InetAddress.getByName("127.0.0.1"), port);
-            OutputStream out = s.getOutputStream();
-            System.err.println("sending server stop request");
-            out.write(("\r\n").getBytes());
-            out.flush();
-            s.close();
-        } catch(Exception e) {
-            // can happen when called twice by jvm shutdown hook
-            System.err.println("stop monitor thread has terminated");
-        }
-    }
-
     private static final String COPYRIGHT_NOTICE =
     "\nFlazr <http://flazr.com> Copyright (C) 2009  Peter Thomas.\n"
     + "This program comes with ABSOLUTELY NO WARRANTY.\n"
@@ -216,10 +202,6 @@ public class Utils {
     + "under certain conditions.  You should have received a copy of the\n"
     + "GNU Lesser General Public License along with Flazr.\n"
     + "If not, see <http://www.gnu.org/licenses/>\n";
-
-    public static void printlnCopyrightNotice() {
-        System.err.println(COPYRIGHT_NOTICE);
-    }
 
     public static String trimSlashes(final String raw) {
         if(raw == null) {

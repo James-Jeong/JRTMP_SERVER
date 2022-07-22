@@ -49,7 +49,15 @@ public class RtmpEncoder extends SimpleChannelDownstreamHandler {
 
     public ChannelBuffer encode(final RtmpMessage message) {
         final ChannelBuffer in = message.encode();
+        if (in == null) {
+            return null;
+        }
+
         final RtmpHeader header = message.getHeader();
+        if (header == null) {
+            return null;
+        }
+
         if(header.isChunkSize()) {
             final ChunkSize csMessage = (ChunkSize) message;
             logger.debug("encoder new chunk size: {}", csMessage);
@@ -60,8 +68,10 @@ public class RtmpEncoder extends SimpleChannelDownstreamHandler {
                 clearPrevHeaders();
             }
         }
+
         final int channelId = header.getChannelId();
         header.setSize(in.readableBytes());
+
         final RtmpHeader prevHeader = channelPrevHeaders[channelId];
         if(prevHeader != null // first stream message is always large
                 && header.getStreamId() > 0 // all control messages always large
@@ -82,12 +92,18 @@ public class RtmpEncoder extends SimpleChannelDownstreamHandler {
             // otherwise force to LARGE
             header.setHeaderType(RtmpHeader.Type.LARGE);
         }
+
         channelPrevHeaders[channelId] = header;
-        if(logger.isDebugEnabled()) {
-            //logger.debug(">> {}", message);
-        }
+        /*if(logger.isDebugEnabled()) {
+            logger.debug(">> {}", message);
+        }*/
+
         final ChannelBuffer out = ChannelBuffers.buffer(
-                RtmpHeader.MAX_ENCODED_SIZE + header.getSize() + header.getSize() / chunkSize);
+                RtmpHeader.MAX_ENCODED_SIZE
+                        + header.getSize()
+                        + header.getSize() / chunkSize
+        );
+
         boolean first = true;
         while(in.readable()) {
             final int size = Math.min(chunkSize, in.readableBytes());
@@ -99,6 +115,7 @@ public class RtmpEncoder extends SimpleChannelDownstreamHandler {
             }
             in.readBytes(out, size);
         }
+
         return out;
     }
 

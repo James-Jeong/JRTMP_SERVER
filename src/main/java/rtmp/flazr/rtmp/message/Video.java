@@ -27,7 +27,7 @@ import rtmp.flazr.util.Utils;
 public class Video extends DataMessage {
 
     @Override
-    public boolean isConfig() { // TODO now hard coded for avc1
+    public boolean isConfig() { // now hard coded for avc1
         return data.readableBytes() > 3 && data.getInt(0) == 0x17000000;
     }
 

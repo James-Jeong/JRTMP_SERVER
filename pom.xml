@@ -4,15 +4,15 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>JRTMP_SERVER</groupId>
-    <artifactId>JRTMP_SERVER</artifactId>
+    <groupId>jrtmp_server</groupId>
+    <artifactId>jrtmp_server</artifactId>
     <version>1.0.0</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <service.home>/home/atmos</service.home>
-        <service.group>atmos</service.group>
-        <service.user>atmos</service.user>
+        <service.home>/home/urtmp</service.home>
+        <service.group>urtmp</service.group>
+        <service.user>urtmp</service.user>
         <rpm.release.version>1</rpm.release.version>
         <rpm.binary.dir>target/rpm/${project.artifactId}/RPMS/noarch</rpm.binary.dir>
         <rpm.binary.name>${project.artifactId}-${project.version}-${rpm.release.version}.noarch.rpm</rpm.binary.name>
@@ -136,6 +136,12 @@
             <artifactId>netty-all</artifactId>
             <version>5.0.0.Alpha2</version>
         </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.22</version>
+            <scope>compile</scope>
+        </dependency>
 
     </dependencies>
 
@@ -162,8 +168,8 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <source>10</source>
-                    <target>10</target>
+                    <source>9</source>
+                    <target>9</target>
                     <encoding>UTF-8</encoding>
                     <compilerArgs>
                         <arg>-Xlint:all</arg>
@@ -193,7 +199,57 @@
                     </execution>
                 </executions>
             </plugin>
-            
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>build-App</id>
+                        <goals>
+                            <goal>attached</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                            <descriptorRefs>
+                                <descriptorRef>jar-with-dependencies</descriptorRef>
+                            </descriptorRefs>
+                            <finalName>${project.artifactId}-${project.version}</finalName>
+                            <archive>
+                                <manifest>
+                                    <mainClass>RtmpServerMain</mainClass>
+                                </manifest>
+                            </archive>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.1</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                    <compilerArgument>-Xlint:all</compilerArgument>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>2.6</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>RtmpServerMain</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>rpm-maven-plugin</artifactId>
@@ -219,20 +275,20 @@
                     <defaultGroupname>${service.group}</defaultGroupname>
                     <mappings>
                         <mapping>
-                            <directory>${service.home}/urtmp_server/</directory>
+                            <directory>${service.home}/jrtmp_server/</directory>
                         </mapping>
 
                         <mapping>
-                            <directory>${service.home}/urtmp_server/lib/</directory>
+                            <directory>${service.home}/${project.artifactId}/lib/</directory>
                             <sources>
                                 <source>
-                                    <location>${project.basedir}/out/artifacts/JRTMP_SERVER_jar/</location>
+                                    <location>${project.basedir}/target/${project.artifactId}-${project.version}-jar-with-dependencies.jar</location>
                                 </source>
                             </sources>
                         </mapping>
 
                         <mapping>
-                            <directory>${service.home}/urtmp_server/bin/</directory>
+                            <directory>${service.home}/${project.artifactId}/bin/</directory>
                             <filemode>755</filemode>
                             <directoryIncluded>false</directoryIncluded>
                             <sources>
@@ -244,7 +300,7 @@
 
                         <mapping>
                             <configuration>noreplace</configuration>
-                            <directory>${service.home}/urtmp_server/config/</directory>
+                            <directory>${service.home}/${project.artifactId}/config/</directory>
                             <sources>
                                 <source>
                                     <location>${project.basedir}/src/main/resources/config/user_conf.ini</location>
@@ -259,13 +315,13 @@
                         </mapping>
 
                         <mapping>
-                            <directory>${service.home}/urtmp_server/logs/</directory>
+                            <directory>${service.home}/${project.artifactId}/logs/</directory>
                             <filemode>755</filemode>
                         </mapping>
 
                         <mapping>
                             <configuration>noreplace</configuration>
-                            <directory>${service.home}/urtmp_server/auth/</directory>
+                            <directory>${service.home}/${project.artifactId}/auth/</directory>
                             <sources>
                                 <source>
                                     <location>${project.basedir}/src/main/resources/auth/whitelist.txt</location>

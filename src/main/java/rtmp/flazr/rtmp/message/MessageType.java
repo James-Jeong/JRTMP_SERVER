@@ -64,14 +64,14 @@ public enum MessageType implements ValueToEnum.IntValue {
             case SET_PEER_BW:            
                 return 2;
             case COMMAND_AMF0:
-            case COMMAND_AMF3: // TODO verify
+            case COMMAND_AMF3: // verify
                 return 3;
             case METADATA_AMF0:
-            case METADATA_AMF3: // TODO verify
+            case METADATA_AMF3: // verify
             case AUDIO:
             case VIDEO:
             case AGGREGATE:
-            default: // TODO verify
+            default: // verify
                 return 5;
         }
     }

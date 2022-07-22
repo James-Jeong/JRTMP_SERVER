@@ -236,8 +236,4 @@ public class Control extends AbstractMessage {
         return sb.toString();
     }
 
-    public int getStreamId() {
-        return streamId;
-    }
-
 }

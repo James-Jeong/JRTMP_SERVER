@@ -20,13 +20,11 @@
 package rtmp.flazr.rtmp.message;
 
 import org.jboss.netty.buffer.ChannelBuffer;
-import rtmp.flazr.amf.Amf0Object;
-import rtmp.flazr.io.f4v.MovieInfo;
-import rtmp.flazr.io.f4v.TrackInfo;
-import rtmp.flazr.io.f4v.box.STSD;
 import rtmp.flazr.rtmp.RtmpHeader;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * 
@@ -38,13 +36,13 @@ public abstract class Metadata extends AbstractMessage {
     protected String name;
     protected Object[] data;
 
-    public Metadata(String name, Object... data) {
+    protected Metadata(String name, Object... data) {
         this.name = name;
         this.data = data;
         header.setSize(encode().readableBytes());
     }
 
-    public Metadata(RtmpHeader header, ChannelBuffer in) {
+    protected Metadata(RtmpHeader header, ChannelBuffer in) {
         super(header, in);
     }
 
@@ -153,110 +151,6 @@ public abstract class Metadata extends AbstractMessage {
     public static Metadata dataStart() {
         return new MetadataAmf0("onStatus", object(pair("code", "NetStream.Data.Start")));
     }
-
-    //==========================================================================
-
-    /**
-     * 
-     *  videocodecid id
-     *  
-     *	H263:uint = 2;
-		SCREEN:uint = 3;
-		VP6:uint = 4;
-		VP6ALPHA:uint = 5;
-		SCREENV2:uint = 6;
-     	H264:uint = 7;
-    
-     * 
-     * 
-     * 
-     * 
-    [ (map){
-        duration=112.384, moovPosition=28.0, width=640.0, height=352.0, videocodecid=avc1,
-        audiocodecid=mp4a, avcprofile=100.0, avclevel=30.0, aacaot=2.0, videoframerate=29.97002997002997,
-        audiosamplerate=24000.0, audiochannels=2.0, trackinfo= [
-            (object){length=3369366.0, timescale=30000.0, language=eng, sampledescription=[(object){sampletype=avc1}]},
-            (object){length=2697216.0, timescale=24000.0, language=eng, sampledescription=[(object){sampletype=mp4a}]}
-        ]}]
-    */
-
-    public static Metadata onMetaDataTest(MovieInfo movie) {
-        Amf0Object track1 = object(
-            pair("length", 3369366.0),
-            pair("timescale", 30000.0),
-            pair("language", "eng"),
-            pair("sampledescription", new Amf0Object[]{object(pair("sampletype", "avc1"))})
-        );
-        Amf0Object track2 = object(
-            pair("length", 2697216.0),
-            pair("timescale", 24000.0),
-            pair("language", "eng"),
-            pair("sampledescription", new Amf0Object[]{object(pair("sampletype", "mp4a"))})
-        );
-        Map<String, Object> map = map(
-            pair("duration", movie.getDuration()),
-            pair("moovPosition", movie.getMoovPosition()),
-            pair("width", 640.0),
-            pair("height", 352.0),
-            pair("videocodecid", "avc1"),
-            pair("audiocodecid", "mp4a"),
-            pair("avcprofile", 100.0),
-            pair("avclevel", 30.0),
-            pair("aacaot", 2.0),
-            pair("videoframerate", 29.97002997002997),
-            pair("audiosamplerate", 24000.0),
-            pair("audiochannels", 2.0),
-            pair("trackinfo", new Amf0Object[]{track1, track2})
-        );
-        return new MetadataAmf0("onMetaData", map);
-    }
-
-    public static Metadata onMetaData(MovieInfo movie) {
-        Map<String, Object> map = map(
-            pair("duration", movie.getDuration()),
-            pair("moovPosition", movie.getMoovPosition())
-        );
-        TrackInfo track1 = movie.getVideoTrack();
-        Amf0Object t1 = null;
-        if(track1 != null) {
-            String sampleType = track1.getStsd().getSampleTypeString(1);
-            t1 = object(
-                pair("length", track1.getMdhd().getDuration()),
-                pair("timescale", track1.getMdhd().getTimeScale()),
-                pair("sampledescription", new Amf0Object[]{object(pair("sampletype", sampleType))})
-            );
-            STSD.VideoSD video = movie.getVideoSampleDescription();
-            map(map,
-                pair("width", (double) video.getWidth()),
-                pair("height", (double) video.getHeight()),
-                pair("videocodecid", sampleType)
-            );
-        }
-        TrackInfo track2 = movie.getAudioTrack();
-        Amf0Object t2 = null;
-        if(track2 != null) {
-            String sampleType = track2.getStsd().getSampleTypeString(1);
-            t2 = object(
-                pair("length", track2.getMdhd().getDuration()),
-                pair("timescale", track2.getMdhd().getTimeScale()),
-                pair("sampledescription", new Amf0Object[]{object(pair("sampletype", sampleType))})
-            );
-            map(map,
-                pair("audiocodecid", sampleType)
-            );
-        }
-        List<Amf0Object> trackList = new ArrayList<Amf0Object>();
-        if(t1 != null) {
-            trackList.add(t1);
-        }
-        if(t2 != null) {
-            trackList.add(t2);
-        }
-        map(map, pair("trackinfo", trackList.toArray()));
-        return new MetadataAmf0("onMetaData", map);
-    }
-
-    //==========================================================================
 
     public String getName() {
         return name;

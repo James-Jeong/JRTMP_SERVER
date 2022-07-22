@@ -121,7 +121,7 @@ public class LoopedReader implements RtmpReader {
             return message;
         }
         timePosition = (long) duration * loopsCompleted + message.getHeader().getTime();
-        message.getHeader().setTime((int) timePosition); // TODO find and cleanup all these (int) casts
+        message.getHeader().setTime((int) timePosition); // find and cleanup all these (int) casts
         return message;
     }
 

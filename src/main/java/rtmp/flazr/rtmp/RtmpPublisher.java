@@ -27,8 +27,6 @@ import org.jboss.netty.util.HashedWheelTimer;
 import org.jboss.netty.util.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import rtmp.flazr.io.f4v.F4vReader;
-import rtmp.flazr.io.flv.FlvReader;
 
 import java.util.concurrent.TimeUnit;
 
@@ -51,12 +49,10 @@ public abstract class RtmpPublisher {
     private int playLength = -1;
     private boolean paused;
     private int bufferDuration;
-
-    private int channelId = 8;
     ///////////////////////////////////////////////////////
 
     ///////////////////////////////////////////////////////
-    public RtmpPublisher(final RtmpReader reader, final int streamId, final int bufferDuration,
+    protected RtmpPublisher(final RtmpReader reader, final int streamId, final int bufferDuration,
                          boolean useSharedTimer, boolean aggregateModeEnabled) {
         this.aggregateModeEnabled = aggregateModeEnabled;
         this.usingSharedTimer = useSharedTimer;
@@ -133,15 +129,6 @@ public abstract class RtmpPublisher {
     ///////////////////////////////////////////////////////
 
     ///////////////////////////////////////////////////////
-    public static RtmpReader getReader(String path) {
-        if (path.toLowerCase().startsWith("mp4:")) {
-            return new F4vReader(path.substring(4));
-        } else if (path.toLowerCase().endsWith(".f4v")) {
-            return new F4vReader(path);
-        } else {
-            return new FlvReader(path);
-        }
-    }
 
     public boolean isStarted() {
         return currentConversationId > 0;
@@ -208,18 +195,13 @@ public abstract class RtmpPublisher {
         final long elapsedTimePlusSeek = elapsedTime + seekTime;
         final double clientBuffer = timePosition - elapsedTimePlusSeek;
 
-        if (aggregateModeEnabled
-                && (clientBuffer > timerTickSize)) { // TODO cleanup
+        if (aggregateModeEnabled && (clientBuffer > timerTickSize)) {
             reader.setAggregateDuration((int) clientBuffer);
-            //logger.debug("[RtmpPublisher] RtmpReader's aggregate duration: [{}]", (int) clientBuffer);
         } else {
             reader.setAggregateDuration(0);
-            //logger.debug("[RtmpPublisher] RtmpReader's aggregate duration: [0]");
         }
 
         final RtmpHeader header = message.getHeader();
-        //logger.debug("[RtmpPublisher] RTMP Header: {}", header);
-
         final double compensationFactor = clientBuffer / (bufferDuration + timerTickSize);
         final long delay = (long) ((header.getTime() - timePosition) * compensationFactor);
 
@@ -231,7 +213,6 @@ public abstract class RtmpPublisher {
 
         timePosition = header.getTime();
         header.setStreamId(streamId);
-        header.setChannelId(channelId);
 
         final ChannelFuture future = channel.write(message);
         future.addListener(cf -> {
@@ -335,10 +316,6 @@ public abstract class RtmpPublisher {
 
     public int getBufferDuration() {
         return bufferDuration;
-    }
-
-    public void setChannelId(int channelId) {
-        this.channelId  = channelId;
     }
     ///////////////////////////////////////////////////////
 

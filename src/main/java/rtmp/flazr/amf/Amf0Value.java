@@ -25,10 +25,7 @@ import org.slf4j.LoggerFactory;
 import rtmp.flazr.util.ValueToEnum;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 import static rtmp.flazr.amf.Amf0Value.Type.*;
 
@@ -215,13 +212,13 @@ public class Amf0Value {
                     array[i] = decode(in);
                 }
                 return array;
-            case MAP:               
+            case MAP:
             case OBJECT:
                 final int count;
                 final Map<String, Object> map;
                 if(type == MAP) {
                     count = in.readInt(); // should always be 0
-                    map = new LinkedHashMap<String, Object>();
+                    map = new LinkedHashMap<>();
                     if(count > 0 && logger.isDebugEnabled()) {
                         logger.debug("non-zero size for MAP type: {}", count);
                     }
@@ -277,7 +274,7 @@ public class Amf0Value {
             	}
                 String classname = decodedString;
                 Amf0Object object = (Amf0Object) decode(in, OBJECT);
-                object.put("classname", classname);
+                Objects.requireNonNull(object).put("classname", classname);
                 return object;
             default:
                 throw new RuntimeException("unexpected type: " + type);

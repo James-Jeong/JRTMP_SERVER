@@ -31,19 +31,22 @@ public class ChannelUtils {
     private static final Logger logger = LoggerFactory.getLogger(ChannelUtils.class);
 
     public static void exceptionCaught(final ExceptionEvent e) {
-        logger.warn("exception: {}", e.toString());
+        if (e == null) { return; }
+
+        logger.warn("exception: {}", e);
+        if (e.toString().contains("Connection reset by peer")
+                || e.toString().contains("ClosedChannelException")) {
+            return;
+        }
+
         if (e.getCause() != null) {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             e.getCause().printStackTrace(pw);
-            logger.warn("cause: {}", e.getCause().toString());
+            //logger.warn("cause: {}", e.getCause().toString());
             logger.warn("message: {}", e.getCause().getMessage());
-            logger.warn("stacktrace: {}", sw.toString());
+            //logger.warn("stacktrace: {}", sw);
         }
-        // do not close the channel on every exception
-//        if(e.getChannel().isOpen()) {
-//            e.getChannel().close();
-//        }
     }
 
 }

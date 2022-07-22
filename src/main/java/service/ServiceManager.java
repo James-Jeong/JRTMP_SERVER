@@ -5,7 +5,9 @@ import org.slf4j.LoggerFactory;
 import rtmp.RtmpManager;
 import service.monitor.FileKeeper;
 import service.monitor.HaHandler;
-import service.monitor.LongRtmpPubUnitRemover;
+import service.monitor.LongServerStreamRemover;
+import service.scheduler.job.Job;
+import service.scheduler.job.JobBuilder;
 import service.scheduler.schedule.ScheduleManager;
 
 import java.io.File;
@@ -35,6 +37,8 @@ public class ServiceManager {
     private FileLock lock;
     private boolean isQuit = false;
 
+    private FileKeeper fileKeeper = null;
+
     private final RtmpManager rtmpManager = RtmpManager.getInstance();
     ////////////////////////////////////////////////////////////////////////////////
 
@@ -58,32 +62,62 @@ public class ServiceManager {
         ////////////////////////////////////////
         // SCHEDULE MAIN JOBS
         if (scheduleManager.initJob(MAIN_SCHEDULE_JOB, 10, 10 * 2)) {
-            scheduleManager.startJob(MAIN_SCHEDULE_JOB,
-                    new HaHandler(
-                            scheduleManager,
-                            HaHandler.class.getSimpleName(),
-                            0, DELAY, TimeUnit.MILLISECONDS,
-                            5, 0, true
-                    )
-            );
+            Job haHandleJob = new JobBuilder()
+                    .setScheduleManager(scheduleManager)
+                    .setInitialDelay(0)
+                    .setInterval(DELAY)
+                    .setTimeUnit(TimeUnit.MILLISECONDS)
+                    .setPriority(5)
+                    .setTotalRunCount(1)
+                    .setIsLasted(true)
+                    .build();
 
-            scheduleManager.startJob(MAIN_SCHEDULE_JOB,
-                    new LongRtmpPubUnitRemover(
-                            scheduleManager,
-                            LongRtmpPubUnitRemover.class.getSimpleName(),
-                            0, DELAY, TimeUnit.MILLISECONDS,
-                            3, 0, true
-                    )
-            );
+            HaHandler haHandler = new HaHandler(haHandleJob);
+            haHandler.init();
+            if (scheduleManager.startJob(MAIN_SCHEDULE_JOB, haHandler.getJob())) {
+                logger.debug("[ServerManager] [+RUN] HaHandler");
+            } else {
+                logger.warn("[ServerManager] [-RUN FAIL] HaHandler");
+            }
 
-            FileKeeper fileKeeper = new FileKeeper(
-                    scheduleManager,
-                    FileKeeper.class.getSimpleName(),
-                    0, DELAY, TimeUnit.MILLISECONDS,
-                    10, 0, true
-            );
+            if (AppInstance.getInstance().getConfigManager().getLocalSessionLimitTime() > 0) {
+                Job longServerStreamRemoveJob = new JobBuilder()
+                        .setScheduleManager(scheduleManager)
+                        .setName(LongServerStreamRemover.class.getSimpleName())
+                        .setInitialDelay(0)
+                        .setInterval(DELAY)
+                        .setTimeUnit(TimeUnit.MILLISECONDS)
+                        .setPriority(3)
+                        .setTotalRunCount(1)
+                        .setIsLasted(true)
+                        .build();
+                LongServerStreamRemover longServerStreamRemover = new LongServerStreamRemover(longServerStreamRemoveJob);
+                longServerStreamRemover.init();
+                if (scheduleManager.startJob(MAIN_SCHEDULE_JOB, longServerStreamRemover.getJob())) {
+                    logger.debug("[ServerManager] [+RUN] LongServerStreamRemover");
+                } else {
+                    logger.warn("[ServerManager] [-RUN FAIL] LongServerStreamRemover");
+                }
+            }
+
+            Job fileKeepJob = new JobBuilder()
+                    .setScheduleManager(scheduleManager)
+                    .setName(FileKeeper.class.getSimpleName())
+                    .setInitialDelay(0)
+                    .setInterval(DELAY)
+                    .setTimeUnit(TimeUnit.MILLISECONDS)
+                    .setPriority(1)
+                    .setTotalRunCount(1)
+                    .setIsLasted(true)
+                    .build();
+            fileKeeper = new FileKeeper(fileKeepJob);
             if (fileKeeper.init()) {
-                scheduleManager.startJob(MAIN_SCHEDULE_JOB, fileKeeper);
+                fileKeeper.start();
+                if (scheduleManager.startJob(MAIN_SCHEDULE_JOB, fileKeeper.getJob())) {
+                    logger.debug("[ServiceManager] [+RUN] FileKeeper");
+                } else {
+                    logger.warn("[ServiceManager] [-RUN FAIL] FileKeeper");
+                }
             }
         }
         ////////////////////////////////////////
