@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class ServerStream {
 
@@ -44,8 +45,11 @@ public class ServerStream {
 
     private final String streamName;
     private final PublishType publishType;
+
     private ChannelGroup subscribers;
     private final List<String> subscriberChIds;
+    private ReentrantLock subscribeLock = new ReentrantLock();
+
     private Channel publishChannel;
     private String publishChId;
     private final List<RtmpMessage> configMessages;
@@ -106,10 +110,34 @@ public class ServerStream {
 
     public void addSubscriber(Channel channel) {
         if (subscribers != null) {
-            subscribers.add(channel);
-            subscriberChIds.add(channel.getId() + "");
+            subscribeLock.lock();
+            try {
+                subscribers.add(channel);
+                subscriberChIds.add(channel.getId() + "");
+            } catch (Exception e) {
+                logger.warn("({}) [ServerStream] removeSubscriber exception", publishChId, e);
+            } finally {
+                subscribeLock.unlock();
+            }
         } else {
             logger.warn("({}) [ServerStream] [{}:{}] subscribers is Null, Fail to addSubscriber (channelId:{})",
+                    publishChId, publishType, streamName, channel.getId());
+        }
+    }
+
+    public void removeSubscriber(Channel channel) {
+        if (subscribers != null) {
+            subscribeLock.lock();
+            try {
+                subscribers.remove(channel);
+                subscriberChIds.remove(channel.getId() + "");
+            } catch (Exception e) {
+                logger.warn("({}) [ServerStream] removeSubscriber exception", publishChId, e);
+            } finally {
+                subscribeLock.unlock();
+            }
+        } else {
+            logger.warn("({}) [ServerStream] [{}:{}] subscribers is Null, Fail to removeSubscriber (channelId:{})",
                     publishChId, publishType, streamName, channel.getId());
         }
     }

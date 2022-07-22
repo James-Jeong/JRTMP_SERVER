@@ -25,7 +25,6 @@ import org.jboss.netty.handler.codec.frame.FrameDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rtmp.flazr.rtmp.RtmpHandshake;
-import rtmp.flazr.rtmp.RtmpPublisher;
 import rtmp.flazr.util.Utils;
 
 import java.util.Arrays;
@@ -84,11 +83,7 @@ public class ServerHandshakeHandler extends FrameDecoder implements ChannelDowns
             super.handleUpstream(ctx, ce);
             return;
         }
-        final MessageEvent me = (MessageEvent) ce;
-        if(me.getMessage() instanceof RtmpPublisher.Event) {
-            super.handleUpstream(ctx, ce);
-            return;
-        }
+
         final ChannelBuffer in = (ChannelBuffer) ((MessageEvent) ce).getMessage();
         handshake.cipherUpdateIn(in);
         Channels.fireMessageReceived(ctx, in);

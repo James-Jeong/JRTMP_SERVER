@@ -2,7 +2,6 @@ package service.monitor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import service.AppInstance;
 import service.resource.ResourceManager;
 import service.resource.StreamIdManager;
 import service.scheduler.job.Job;

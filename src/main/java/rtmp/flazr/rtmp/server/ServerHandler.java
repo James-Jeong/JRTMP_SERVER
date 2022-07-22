@@ -26,7 +26,6 @@ import org.slf4j.LoggerFactory;
 import rtmp.base.PublishType;
 import rtmp.flazr.amf.Amf0Object;
 import rtmp.flazr.rtmp.RtmpMessage;
-import rtmp.flazr.rtmp.RtmpPublisher;
 import rtmp.flazr.rtmp.message.*;
 import rtmp.flazr.util.ChannelUtils;
 import rtmp.metadata.AudioCodecId;
@@ -35,15 +34,12 @@ import rtmp.metadata.VideoCodecId;
 import service.resource.ResourceManager;
 import service.resource.ResourceReleaseManager;
 import service.resource.StreamIdManager;
-import service.scheduler.job.Job;
-import service.scheduler.job.JobBuilder;
 import service.scheduler.schedule.ScheduleManager;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class ServerHandler extends SimpleChannelHandler {
 
@@ -59,7 +55,6 @@ public class ServerHandler extends SimpleChannelHandler {
     private String playName;
     private int streamId;
     private int bufferDuration;
-    private RtmpPublisher publisher;
     private ServerStream publishStream;
     private boolean aggregateModeEnabled = true;
     private String remoteHost;
@@ -68,6 +63,7 @@ public class ServerHandler extends SimpleChannelHandler {
     private String tcURL;
     private Channel channel;
     private String appName;
+
     private static final ResourceManager resourceManager = ResourceManager.getInstance();
     private static final StreamIdManager streamIdManager = StreamIdManager.getInstance();
     private static final ResourceReleaseManager resourceReleaseManager = ResourceReleaseManager.getInstance();
@@ -83,22 +79,16 @@ public class ServerHandler extends SimpleChannelHandler {
     public void setAggregateModeEnabled(boolean aggregateModeEnabled) {
         this.aggregateModeEnabled = aggregateModeEnabled;
     }
-
-
-    // Play 메시지 오면 publisher 세팅
-    public RtmpPublisher getPublisher() {
-        return publisher;
-    }
-
     @Override
     public void channelOpen(final ChannelHandlerContext ctx, final ChannelStateEvent e) {
         InetSocketAddress sa=(InetSocketAddress) e.getChannel().getRemoteAddress();
-        remoteHost=sa.getAddress().getHostAddress();
-        remotePort=sa.getPort();
-        this.createTime=new Date();
-        this.channel=ctx.getChannel();
-        logger.warn("({}) [CHANNEL OPEN] Channel: {}", channel.getId(), channel);
-        logger.info("({}) [CHANNEL OPEN] : {}", channel.getId(), e);
+        remoteHost = sa.getAddress().getHostAddress();
+        remotePort = sa.getPort();
+
+        this.createTime = new Date();
+        this.channel = ctx.getChannel();
+        logger.debug("({}) [CHANNEL OPEN] Channel: {}", channel.getId(), channel);
+        //logger.info("({}) [CHANNEL OPEN] : {}", channel.getId(), e);
     }
 
     @Override
@@ -108,11 +98,11 @@ public class ServerHandler extends SimpleChannelHandler {
 
     @Override
     public void channelClosed(final ChannelHandlerContext ctx, final ChannelStateEvent e) {
-        logger.warn("({}) [CHANNEL CLOSED] Channel: {}", channel.getId(), channel);
-        logger.info("({}) [CHANNEL CLOSED] : {}", channel.getId(), e);
+        logger.debug("({}) [CHANNEL CLOSED] Channel: {}", channel.getId(), channel);
+        //logger.info("({}) [CHANNEL CLOSED] : {}", channel.getId(), e);
 
-        if (publisher != null) {
-            publisher.close();
+        if (publishStream != null) {
+            publishStream.removeSubscriber(channel);
         }
 
         releaseResource();
@@ -131,18 +121,11 @@ public class ServerHandler extends SimpleChannelHandler {
     @Override
     public void messageReceived(final ChannelHandlerContext ctx, final MessageEvent me) throws Exception {
         try {
-            if (publisher != null && publisher.handle(me)) {
-                return;
-            }
-
             final Channel channel = me.getChannel();
             final RtmpMessage message = (RtmpMessage) me.getMessage();
 
             bytesRead += message.getHeader().getSize();
             if ((bytesRead - bytesReadLastSent) > BYTES_READ_WINDOW) {
-            /*if(logger.isDebugEnabled()){
-                logger.debug("sending bytes read ack after: {}", bytesRead);
-            }*/
                 BytesRead ack = new BytesRead(bytesRead);
                 channel.write(ack);
                 bytesReadLastSent = bytesRead;
@@ -157,7 +140,6 @@ public class ServerHandler extends SimpleChannelHandler {
                     break;
                 case COMMAND_AMF0:
                 case COMMAND_AMF3:
-                    logger.debug("22222");
                     onCommand(channel, message);
                     return; // NOT break
                 case METADATA_AMF0:
@@ -171,15 +153,9 @@ public class ServerHandler extends SimpleChannelHandler {
                         publishStream.addConfigMessage(message);
                     }
                 case AGGREGATE:
-                    //logger.debug("<AGGREGATE HEADER> [{}]", message.getHeader());
                     broadcast(message);
                     break;
                 case BYTES_READ:
-                /*final BytesRead bytesReadByClient = (BytesRead) message;
-                long byteRead=bytesReadByClient.getValue();
-                if(logger.isDebugEnabled()){
-                    logger.debug("client bytes read:{}",byteRead);
-                }*/
                     break;
                 case WINDOW_ACK_SIZE:
                     WindowAckSize was = (WindowAckSize) message;
@@ -196,16 +172,9 @@ public class ServerHandler extends SimpleChannelHandler {
                 default:
                     logger.warn("ignoring message: {}", message);
             }
-            fireNext(channel);
         } catch (Exception e) {
             logger.warn("ServerHandler.messageReceived.Exception", e);
             throw e;
-        }
-    }
-
-    private void fireNext(final Channel channel) {
-        if(publisher != null && publisher.isStarted() && !publisher.isPaused()) {
-            publisher.fireNext(channel, 0);
         }
     }
 
@@ -228,6 +197,7 @@ public class ServerHandler extends SimpleChannelHandler {
     private void broadcast(final RtmpMessage message) {
         ChannelGroup subscribers = publishStream.getSubscribers();
         if (subscribers == null) { return; }
+
         subscribers.write(message);
     }
 
@@ -251,9 +221,6 @@ public class ServerHandler extends SimpleChannelHandler {
         if (control.getType() == Control.Type.SET_BUFFER) {
             logger.debug("received set buffer: {}", control);
             bufferDuration = control.getBufferLength();
-            if (publisher != null) {
-                publisher.setBufferDuration(bufferDuration);
-            }
         } else {
             logger.info("({}) [Control] ignored control: {}", channel.getId(), control);
         }
@@ -271,7 +238,7 @@ public class ServerHandler extends SimpleChannelHandler {
         } else {
             logger.warn("({}) Video codec is unmatched. (allowedIds={})", clientId, VideoCodecId.getCodecIdListString());
             resourceReleaseManager.sendRtmpFail(channel, publishStream.getStreamName(), streamId, false);
-            releaseResourceExceptKafka();
+            releaseResource();
             return;
         }
 
@@ -282,7 +249,7 @@ public class ServerHandler extends SimpleChannelHandler {
         } else {
             logger.warn("({}) Audio codec is unmatched. (allowedIds={})", clientId, AudioCodecId.getCodecIdListString());
             resourceReleaseManager.sendRtmpFail(channel, publishStream.getStreamName(), streamId, false);
-            releaseResourceExceptKafka();
+            releaseResource();
             return;
         }
 
@@ -338,7 +305,6 @@ public class ServerHandler extends SimpleChannelHandler {
                 break;
             default:
                 logger.warn("({}) [Command] UnRegistered CmdMsg, Ignoring [{}]", channel.getId(), cmdName);
-                fireNext(channel);
                 break;
         }
     }
@@ -385,6 +351,7 @@ public class ServerHandler extends SimpleChannelHandler {
     // MessageType.COMMAND.play
     private void playResponse(final Channel channel, final Command play) {
         final String playStreamName = (String) play.getArg(0);
+        this.playName = playStreamName;
 
         int playStart = -2;
         if (play.getArgCount() > 1) {
@@ -413,21 +380,21 @@ public class ServerHandler extends SimpleChannelHandler {
         /////////////////////////////
 
         // Published ServerStream 조회
-        ServerStream stream = application.getStream(playStreamName);
-        if (stream == null) {
+        publishStream = application.getStream(playStreamName);
+        if (publishStream == null) {
             // create play ServerStream, PlayStream 정리 위해 playStream flag 사용
-            logger.info("({}) [Play] Not Exist [{}] PublishStream, Create New PlayStream", clientId, playStreamName);
-            stream = application.addStream(playStreamName, null);
-            stream.setPlayStream(true);
+            logger.warn("({}) [Play] Not Exist [{}] PublishStream.", clientId, playStreamName);
+            denyStream(channel, playStreamName, true);
+            return;
         }
 
-        logger.debug("({}) [Play] streamName: {}, streamId {}, start {}, duration {}, reset {}",
+        logger.debug("({}) [Play] streamName: {}, streamId: {}, start: {}, duration: {}, reset: {}",
                 clientId, playStreamName, streamId, playStart, playDuration, playReset
         );
 
         // ---------- LIVE STREAMING ---------- //
         // live 타입으로 publish 했던 stream
-        if(stream.isLive()) {
+        if(publishStream.isLive()) {
             // ChunkSize, StreamIsRecorded, StreamBegin, PlayStart, Metadata
             for (final RtmpMessage message : getStartMessages(playResetCommand)) {
                 writeToStream(channel, message);
@@ -436,7 +403,7 @@ public class ServerHandler extends SimpleChannelHandler {
             boolean videoConfigPresent = false;
 
             // PublishStream 에서 받은 ConfigMessage -> playStream 에 전달
-            for (RtmpMessage message : stream.getConfigMessages()) {
+            for (RtmpMessage message : publishStream.getConfigMessages()) {
                 logger.info("({}) [Play] writing start meta / config: {}", clientId, message);
 
                 if (message.getHeader().isVideo()) {
@@ -452,12 +419,8 @@ public class ServerHandler extends SimpleChannelHandler {
             }
 
             // PublishStream subscribers 에 playStream channel 추가
-            stream.addSubscriber(channel);
-            logger.info("({}) [Play] client requested live stream: {}, added to stream: {}", clientId, playStreamName, stream);
-
-            if (publisher != null) {
-                publisher.start(channel, playStart, playDuration, getStartMessages(playResetCommand));
-            }
+            publishStream.addSubscriber(channel);
+            logger.info("({}) [Play] client requested live stream: {}, added to stream: {}", clientId, playStreamName, publishStream);
         } else {
             denyStream(channel, playStreamName, true);
         }
@@ -465,38 +428,12 @@ public class ServerHandler extends SimpleChannelHandler {
 
     // MessageType.COMMAND.pause
     private void pauseResponse(final Channel channel, final Command command) {
-        if (publisher == null) {
-            logger.debug("cannot pause when live");
-            return;
-        }
-
-        final boolean paused = ((Boolean) command.getArg(0));
-        final int clientTimePosition = ((Double) command.getArg(1)).intValue();
-        logger.debug("pause request: {}, client time position: {}", paused, clientTimePosition);
-
-        if(!paused) {
-            logger.debug("doing unpause, seeking and playing");
-            final Command unpause = Command.unpauseNotify(playName, clientId);
-            publisher.start(channel, clientTimePosition, getStartMessages(unpause));
-        } else {
-            publisher.pause();
-        }
+        logger.warn("({}) cannot pause when live", channel.getId());
     }
 
     // MessageType.COMMAND.seek
     private void seekResponse(final Channel channel, final Command command) {
-        if(publisher == null) {
-            logger.debug("cannot seek when live");
-            return;
-        }
-
-        final int clientTimePosition = ((Double) command.getArg(0)).intValue();
-        if (!publisher.isPaused()) {
-            final Command seekNotify = Command.seekNotify(streamId, clientTimePosition, playName, clientId);
-            publisher.start(channel, clientTimePosition, getStartMessages(seekNotify));
-        } else {
-            logger.debug("ignoring seek when paused, client time position: {}", clientTimePosition);
-        }
+        logger.warn("({}) cannot seek when live", channel.getId());
     }
 
     // // MessageType.COMMAND.publish
@@ -580,13 +517,11 @@ public class ServerHandler extends SimpleChannelHandler {
 
     // kafkaInfo, publishStream, streamId 정리
     private void releaseResource() {
-        releaseResourceExceptKafka();
-    }
+        if (playName == null) {
+            resourceReleaseManager.unPublishIfLive(application, publishStream, streamId);
+        }
 
-    private void releaseResourceExceptKafka() {
-        resourceReleaseManager.unPublishIfLive(application, publishStream, streamId);
         resourceReleaseManager.releaseStreamId(streamId, clientId);
-        if (playName != null) { resourceReleaseManager.clearPlayStream(application, playName, clientId); }
         scheduleManager.stopAll(RTMP_SCHEDULE_JOB);
     }
 

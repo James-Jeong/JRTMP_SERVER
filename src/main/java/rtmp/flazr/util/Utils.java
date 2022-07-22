@@ -28,9 +28,10 @@ import org.jboss.netty.buffer.ChannelBuffer;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-import java.io.*;
-import java.net.InetAddress;
-import java.net.Socket;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
 
 public class Utils {
 

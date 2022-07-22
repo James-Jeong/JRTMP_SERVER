@@ -2,14 +2,12 @@ package service.resource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import rtmp.base.PublishType;
 import rtmp.flazr.rtmp.server.ServerApplication;
 import rtmp.flazr.util.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ResourceManager {

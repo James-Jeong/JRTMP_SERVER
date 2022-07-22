@@ -21,6 +21,8 @@ package rtmp.flazr.rtmp.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import rtmp.base.PublishType;
+import rtmp.flazr.rtmp.StreamType;
 import rtmp.flazr.util.Utils;
 
 import java.util.ArrayList;
@@ -33,6 +35,7 @@ public class ServerApplication {
     private static final Logger logger = LoggerFactory.getLogger(ServerApplication.class);
 
     private final String appName;
+
     private final Map<String, ServerStream> streams;
 
     public ServerApplication(final String rawAppName) {
@@ -44,17 +47,17 @@ public class ServerApplication {
         return appName;
     }
 
-    public ServerStream addStream(final String rawStreamName, final String type) {
+    public ServerStream addStream(final String rawStreamName, final String publishType) {
         final String streamName = cleanName(rawStreamName);
 
         if (hasStream(streamName)) {
-            logger.error("[ServerApp({})] ServerStream [{}:{}] ALREADY EXIST", appName, type, streamName);
+            logger.error("[ServerApp({})] ServerStream [{}:{}] ALREADY EXIST", appName, publishType, streamName);
             return null;
         }
 
-        ServerStream stream = new ServerStream(streamName, type);
+        ServerStream stream = new ServerStream(streamName, publishType);
         streams.put(streamName, stream);
-        logger.warn("[ServerApp({})] ServerStream [{}:{}] (+)CREATED", appName, type, streamName);
+        logger.warn("[ServerApp({})] ServerStream [{}:{}] (+)CREATED", appName, publishType, streamName);
         return stream;
     }
 
