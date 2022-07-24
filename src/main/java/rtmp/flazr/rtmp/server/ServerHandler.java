@@ -456,7 +456,7 @@ public class ServerHandler extends SimpleChannelHandler {
             // Create Publish ServerStream
             publishStream = application.getStream(streamName);
             if (publishStream == null) {
-                publishStream = application.addStream(streamName, publishTypeStr);
+                publishStream = application.addStream(streamId, streamName, publishTypeStr);
             } else {
                 logger.info("({}) [Publish] ServerStream ALREADY EXIST", clientId);
             }

@@ -43,6 +43,7 @@ public class ServerStream {
     private static final Logger logger = LoggerFactory.getLogger(ServerStream.class);
     private final long initiationTime = System.currentTimeMillis();
 
+    private final int streamId;
     private final String streamName;
     private final PublishType publishType;
 
@@ -58,7 +59,8 @@ public class ServerStream {
     ///////////////////////////////////////////////////////
 
     ///////////////////////////////////////////////////////
-    public ServerStream(final String rawName, final String typeString) {
+    public ServerStream(int streamId, final String rawName, final String typeString) {
+        this.streamId = streamId;
         this.streamName = Utils.trimSlashes(rawName).toLowerCase();
         this.configMessages = new ArrayList<>();
 
@@ -166,6 +168,10 @@ public class ServerStream {
 
     public Map<String, String> getMetadata() {
         return metadata;
+    }
+
+    public int getStreamId() {
+        return streamId;
     }
 
     public String getPublishChId() {

@@ -19,11 +19,14 @@
 
 package rtmp.flazr.rtmp.server;
 
+import jdk.internal.loader.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rtmp.base.PublishType;
 import rtmp.flazr.rtmp.StreamType;
 import rtmp.flazr.util.Utils;
+import service.resource.ResourceManager;
+import service.resource.ResourceReleaseManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,7 +50,7 @@ public class ServerApplication {
         return appName;
     }
 
-    public ServerStream addStream(final String rawStreamName, final String publishType) {
+    public ServerStream addStream(int streamId, final String rawStreamName, final String publishType) {
         final String streamName = cleanName(rawStreamName);
 
         if (hasStream(streamName)) {
@@ -55,7 +58,7 @@ public class ServerApplication {
             return null;
         }
 
-        ServerStream stream = new ServerStream(streamName, publishType);
+        ServerStream stream = new ServerStream(streamId, streamName, publishType);
         streams.put(streamName, stream);
         logger.warn("[ServerApp({})] ServerStream [{}:{}] (+)CREATED", appName, publishType, streamName);
         return stream;
@@ -99,6 +102,17 @@ public class ServerApplication {
 
     public void deleteAllServerStreams() {
         synchronized (streams) {
+            for (Map.Entry<String, ServerStream> streamEntry : streams.entrySet()) {
+                ServerStream serverStream = streamEntry.getValue();
+                if (serverStream != null && serverStream.isLive() && !serverStream.isPlayStream()) {
+                    ResourceReleaseManager.getInstance().unPublishIfLive(
+                            ResourceManager.getInstance().getServerApp(appName),
+                            serverStream,
+                            serverStream.getStreamId()
+                    );
+                }
+            }
+
             streams.entrySet().removeIf(Objects::nonNull);
         }
     }
