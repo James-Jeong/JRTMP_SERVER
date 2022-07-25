@@ -40,30 +40,27 @@ public class ResourceReleaseManager {
      * @brief publish 했던 stream 정리
      * @param app publishStream 관리 하는 ServerApplication
      * @param publishStream 정리 하려는 publishStream
-     * @param streamId stream ID
      * */
-    public void unPublishIfLive(ServerApplication app, ServerStream publishStream, int streamId) {
-        if(publishStream != null && publishStream.getPublishChannel() != null) {
-            final Channel publishChannel = publishStream.getPublishChannel();
-            String channelId = publishChannel.getId() + "";
-            String streamName = publishStream.getStreamName();
+    public void unPublishIfLive(ServerApplication app, ServerStream publishStream) {
+        if (app == null || publishStream == null) { return; }
 
-            logger.warn("({}) [ResourceRelease] Cleaning PublishStream...(streamId:{}, streamName:{})", channelId, streamId, streamName);
+        final Channel publishChannel = publishStream.getPublishChannel();
+        if (publishChannel != null) {
+            String streamName = publishStream.getStreamName();
+            String channelId = publishStream.getPublishChannelId() + "";
 
             // Publish Channel 에 unPublish 응답 전송
             if(publishChannel.isWritable()) {
-                publishChannel.write(Command.unpublishSuccess(streamName, channelId, streamId));
+                publishChannel.write(Command.unpublishSuccess(streamName, channelId));
             }
 
             // Subscribers 에게 NetStream.Play.UnPublishNotify 알림 전송, Header 에 streamId 전달
             ChannelGroup channelGroup = publishStream.getSubscribers();
             if (channelGroup != null) {
-                channelGroup.write(Command.unpublishNotify(streamId));
+                channelGroup.write(Command.unpublishNotify(publishStream.getStreamId()));
             }
-            publishStream.setPublishChannel(null);
 
-            // Resource 정리
-            logger.info("({}) [ResourceRelease] Delete Publish ServerStream [{}]", channelId, streamName);
+            publishStream.setPublishChannel(null);
             app.deleteStream(streamName);
         }
     }
@@ -100,26 +97,22 @@ public class ResourceReleaseManager {
      * @brief RTMP 실패 메시지 전송 (ServerStream 생성 전 정리)
      * @param channel 인증 대상 channel
      * @param streamName 인증 하려는 streamName
-     * @param streamId stream ID
-     * @param isPlay Play Stream 여부
+     * @param isPublishStream Publish Stream 여부
      * */
-    public void sendRtmpFail(Channel channel, String streamName, int streamId, boolean isPlay) {
+    public void sendRtmpFail(Channel channel, String streamName, boolean isPublishStream, String reason) {
         String channelId = channel.getId() + "";
 
         // Play streamName 인증 실패
-        if (isPlay) {
+        if (isPublishStream) {
             // NetStream.Play.Failed
+            channel.write(Command.playFailed(reason));
             logger.warn("({}) [ResourceRelease] <FAIL TO PLAY> [{}]", channelId, streamName);
-            channel.write(Command.playFailed(streamName, channelId));
         }
         // Publish streamName 인증 실패
         else {
-            logger.warn("({}) [ResourceRelease] <FAIL TO PUBLISH> [{}]", channelId, streamName);
-            // NetStream.Unpublish.Success 전송 -> Client 에서 closeStream 수신 받은 후 정리
-            //channel.write(Command.unPublishSuccess(streamName, channelId, streamId));
-
             // NetStream.Publish.Failed (onStatus _error) 전송 -> Client 에서 바로 channel close
-            channel.write(Command.publishFailed(streamName, channelId, streamId));
+            channel.write(Command.publishFailed(streamName, channelId));
+            logger.warn("({}) [ResourceRelease] <FAIL TO PUBLISH> [{}]", channelId, streamName);
         }
     }
 

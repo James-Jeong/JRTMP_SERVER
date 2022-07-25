@@ -107,8 +107,7 @@ public class ServerApplication {
                 if (serverStream != null && serverStream.isLive() && !serverStream.isPlayStream()) {
                     ResourceReleaseManager.getInstance().unPublishIfLive(
                             ResourceManager.getInstance().getServerApp(appName),
-                            serverStream,
-                            serverStream.getStreamId()
+                            serverStream
                     );
                 }
             }
@@ -122,11 +121,9 @@ public class ServerApplication {
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder();
-        sb.append("[name: '").append(appName);
-        sb.append("' streams: ").append(streams);
-        sb.append(']');
-        return sb.toString();
+        return "[name: '" + appName +
+                "' streams: " + streams +
+                ']';
     }
 
 }

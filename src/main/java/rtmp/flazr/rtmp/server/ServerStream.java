@@ -49,10 +49,11 @@ public class ServerStream {
 
     private ChannelGroup subscribers;
     private final List<String> subscriberChIds;
-    private ReentrantLock subscribeLock = new ReentrantLock();
+    private final ReentrantLock subscribeLock = new ReentrantLock();
 
     private Channel publishChannel;
-    private String publishChId;
+    private int publishChannelId;
+
     private final List<RtmpMessage> configMessages;
     private final Map<String, String> metadata;
     private boolean isPlayStream;
@@ -111,36 +112,46 @@ public class ServerStream {
     }
 
     public void addSubscriber(Channel channel) {
+        if (publishChannel == null) {
+            logger.warn("({} | {}) [ServerStream] Fail to add subscriber. Publish channel is not exist.", streamId, streamName);
+            return;
+        }
+
         if (subscribers != null) {
             subscribeLock.lock();
             try {
                 subscribers.add(channel);
                 subscriberChIds.add(channel.getId() + "");
             } catch (Exception e) {
-                logger.warn("({}) [ServerStream] removeSubscriber exception", publishChId, e);
+                logger.warn("({} | {} / pubChannelId: {}) [ServerStream] addSubscriber exception", streamId, streamName, publishChannel.getId(), e);
             } finally {
                 subscribeLock.unlock();
             }
         } else {
-            logger.warn("({}) [ServerStream] [{}:{}] subscribers is Null, Fail to addSubscriber (channelId:{})",
-                    publishChId, publishType, streamName, channel.getId());
+            logger.warn("({} | {}) [ServerStream] subscribers is Null, Fail to addSubscriber (pubChannelId: {} / subChannelId:{})",
+                    streamId, streamName, publishChannel.getId(), channel.getId());
         }
     }
 
     public void removeSubscriber(Channel channel) {
+        if (publishChannel == null) {
+            logger.warn("({} | {}) [ServerStream] Fail to remove subscriber. Publish channel is not exist.", streamId, streamName);
+            return;
+        }
+
         if (subscribers != null) {
             subscribeLock.lock();
             try {
                 subscribers.remove(channel);
                 subscriberChIds.remove(channel.getId() + "");
             } catch (Exception e) {
-                logger.warn("({}) [ServerStream] removeSubscriber exception", publishChId, e);
+                logger.warn("({} | {} / pubChannelId: {}) [ServerStream] removeSubscriber exception", streamId, streamName, publishChannel.getId(), e);
             } finally {
                 subscribeLock.unlock();
             }
         } else {
-            logger.warn("({}) [ServerStream] [{}:{}] subscribers is Null, Fail to removeSubscriber (channelId:{})",
-                    publishChId, publishType, streamName, channel.getId());
+            logger.warn("({} | {}) [ServerStream] subscribers is Null, Fail to removeSubscriber (pubChannelId: {} / subChannelId:{})",
+                    streamId, streamName, publishChannel.getId(), channel.getId());
         }
     }
 
@@ -153,17 +164,25 @@ public class ServerStream {
     }
 
     public void setPublishChannel(Channel channel) {
-        if (this.publishChannel != null) {
-            logger.warn("({}) [ServerStream] [{}:{}] PublishChannel Changed {} -> {}",
-                    publishChId, publishType, streamName, this.publishChannel, channel);
-        }
         this.publishChannel = channel;
-        if (channel != null) this.publishChId = channel.getId() + "";
+
+        if (this.publishChannel != null) {
+            logger.warn("({} | {}) [ServerStream] PublishChannel Changed [ {} ] -> [ {} ]",
+                    streamId, streamName, publishChannel.getId(), channel.getId());
+            publishChannelId = publishChannel.getId();
+        } else {
+            publishChannelId = -1;
+        }
+
         configMessages.clear();
     }
 
     public Channel getPublishChannel() {
         return publishChannel;
+    }
+
+    public int getPublishChannelId() {
+        return publishChannelId;
     }
 
     public Map<String, String> getMetadata() {
@@ -172,10 +191,6 @@ public class ServerStream {
 
     public int getStreamId() {
         return streamId;
-    }
-
-    public String getPublishChId() {
-        return publishChId;
     }
 
     public List<String> getSubscriberChIds() {
@@ -286,15 +301,15 @@ public class ServerStream {
     @Override
     public String toString() {
         return  "ServerStream{\r\n" +
-                "\tName=" + streamName + "\r\n" +
-                "\tCreatedTime=" + getInitiationTimeFormat() + "\r\n" +
-                "\tType=" + publishType + "\r\n" +
-                "\tpublishChannelId=" + publishChId + "\r\n" +
-                "\tPublisher=" + publishChannel + "\r\n" +
-                "\tSubscribersChannelId=" + subscriberChIds + "\r\n" +
-                "\tSubscribers=" + subscribers + "\r\n" +
-                "\tAudioAttr=" + makeAudioAttr() + "\r\n" +
-                "\tVideoAttr=" + makeVideoAttr() + "\r\n" +
+                "\tstreamId=" + streamId + "\r\n" +
+                "\tstreamName=" + streamName + "\r\n" +
+                "\tcreatedTime=" + getInitiationTimeFormat() + "\r\n" +
+                "\tpublishType=" + publishType + "\r\n" +
+                "\tpublishChannel=" + publishChannel + "\r\n" +
+                "\tsubscribersChannelId=" + subscriberChIds + "\r\n" +
+                "\tsubscribers=" + subscribers + "\r\n" +
+                "\taudioAttr=" + makeAudioAttr() + "\r\n" +
+                "\tvideoAttr=" + makeVideoAttr() + "\r\n" +
                 '}';
     }
     ///////////////////////////////////////////////////////

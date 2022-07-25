@@ -47,16 +47,21 @@ public class ServerHandler extends SimpleChannelHandler {
 
     private static final int BYTES_READ_WINDOW = 250000;
     private static final int BYTES_WRITTEN_WINDOW = 250000;
+
     private long bytesRead;
     private long bytesReadLastSent;
     private long bytesWritten;
+
     private ServerApplication application;
     private String clientId;
     private String playName;
-    private int streamId;
+
     private int bufferDuration;
-    private ServerStream publishStream;
     private boolean aggregateModeEnabled = true;
+
+    private ServerStream publishStream;
+    private int streamId;
+
     private String remoteHost;
     private int remotePort;
     private Date createTime;
@@ -81,14 +86,14 @@ public class ServerHandler extends SimpleChannelHandler {
     }
     @Override
     public void channelOpen(final ChannelHandlerContext ctx, final ChannelStateEvent e) {
-        InetSocketAddress sa=(InetSocketAddress) e.getChannel().getRemoteAddress();
+        InetSocketAddress sa = (InetSocketAddress) e.getChannel().getRemoteAddress();
         remoteHost = sa.getAddress().getHostAddress();
         remotePort = sa.getPort();
 
         this.createTime = new Date();
         this.channel = ctx.getChannel();
+
         logger.debug("({}) [CHANNEL OPEN] Channel: {}", channel.getId(), channel);
-        //logger.info("({}) [CHANNEL OPEN] : {}", channel.getId(), e);
     }
 
     @Override
@@ -99,13 +104,11 @@ public class ServerHandler extends SimpleChannelHandler {
     @Override
     public void channelClosed(final ChannelHandlerContext ctx, final ChannelStateEvent e) {
         logger.debug("({}) [CHANNEL CLOSED] Channel: {}", channel.getId(), channel);
-        //logger.info("({}) [CHANNEL CLOSED] : {}", channel.getId(), e);
 
-        if (publishStream != null) {
+        /*if (publishStream != null) {
             publishStream.removeSubscriber(channel);
         }
-
-        releaseResource();
+        releaseResource();*/
     }
 
     public void close(){
@@ -119,15 +122,15 @@ public class ServerHandler extends SimpleChannelHandler {
     }
 
     @Override
-    public void messageReceived(final ChannelHandlerContext ctx, final MessageEvent me) throws Exception {
+    public void messageReceived(final ChannelHandlerContext ctx, final MessageEvent messageEvent) {
         try {
-            final Channel channel = me.getChannel();
-            final RtmpMessage message = (RtmpMessage) me.getMessage();
+            final Channel messageEventChannel = messageEvent.getChannel();
+            final RtmpMessage message = (RtmpMessage) messageEvent.getMessage();
 
             bytesRead += message.getHeader().getSize();
             if ((bytesRead - bytesReadLastSent) > BYTES_READ_WINDOW) {
                 BytesRead ack = new BytesRead(bytesRead);
-                channel.write(ack);
+                messageEventChannel.write(ack);
                 bytesReadLastSent = bytesRead;
             }
 
@@ -136,20 +139,20 @@ public class ServerHandler extends SimpleChannelHandler {
                 case CHUNK_SIZE: // handled by decoder
                     break;
                 case CONTROL:
-                    onControl(channel, message);
+                    onControl(messageEventChannel, message);
                     break;
                 case COMMAND_AMF0:
                 case COMMAND_AMF3:
-                    onCommand(channel, message);
+                    onCommand(messageEventChannel, message);
                     return; // NOT break
                 case METADATA_AMF0:
                 case METADATA_AMF3:
-                    onMetadata(channel, message);
+                    onMetadata(messageEventChannel, message);
                     break;
                 case AUDIO:
                 case VIDEO:
                     if (((DataMessage) message).isConfig()) {
-                        logger.debug("({}) [<{}>] Recv the rtmp config message: {}", message.getHeader().getMessageType().name(), channel.getId(), message);
+                        logger.debug("({}) [<{}>] Recv the rtmp config message: {}", msgType.name(), messageEventChannel.getId(), message);
                         publishStream.addConfigMessage(message);
                     }
                 case AGGREGATE:
@@ -160,13 +163,13 @@ public class ServerHandler extends SimpleChannelHandler {
                 case WINDOW_ACK_SIZE:
                     WindowAckSize was = (WindowAckSize) message;
                     if (was.getValue() != BYTES_READ_WINDOW) {
-                        channel.write(SetPeerBw.dynamic(BYTES_READ_WINDOW));
+                        messageEventChannel.write(SetPeerBw.dynamic(BYTES_READ_WINDOW));
                     }
                     break;
                 case SET_PEER_BW:
                     SetPeerBw spb = (SetPeerBw) message;
                     if (spb.getValue() != BYTES_WRITTEN_WINDOW) {
-                        channel.write(new WindowAckSize(BYTES_WRITTEN_WINDOW));
+                        messageEventChannel.write(new WindowAckSize(BYTES_WRITTEN_WINDOW));
                     }
                     break;
                 default:
@@ -174,7 +177,6 @@ public class ServerHandler extends SimpleChannelHandler {
             }
         } catch (Exception e) {
             logger.warn("ServerHandler.messageReceived.Exception", e);
-            throw e;
         }
     }
 
@@ -237,7 +239,7 @@ public class ServerHandler extends SimpleChannelHandler {
             logger.debug("({}) Video codec is matched. (id={}, allowedIds={})", clientId, videoCodecId, VideoCodecId.getCodecIdListString());
         } else {
             logger.warn("({}) Video codec is unmatched. (allowedIds={})", clientId, VideoCodecId.getCodecIdListString());
-            resourceReleaseManager.sendRtmpFail(channel, publishStream.getStreamName(), streamId, false);
+            resourceReleaseManager.sendRtmpFail(channel, publishStream.getStreamName(), true, "Video codec is unmatched.");
             releaseResource();
             return;
         }
@@ -248,7 +250,7 @@ public class ServerHandler extends SimpleChannelHandler {
             logger.debug("({}) Audio codec is matched. (id={}, allowedIds={})", clientId, audioCodecId, AudioCodecId.getCodecIdListString());
         } else {
             logger.warn("({}) Audio codec is unmatched. (allowedIds={})", clientId, AudioCodecId.getCodecIdListString());
-            resourceReleaseManager.sendRtmpFail(channel, publishStream.getStreamName(), streamId, false);
+            resourceReleaseManager.sendRtmpFail(channel, publishStream.getStreamName(), true, "Audio codec is unmatched.");
             releaseResource();
             return;
         }
@@ -295,10 +297,10 @@ public class ServerHandler extends SimpleChannelHandler {
                 closeDeleteResponse("CloseStream", clientStreamId);
                 break;
             case "pause":
-                pauseResponse(channel, command);
+                pauseResponse(channel);
                 break;
             case "seek":
-                seekResponse(channel, command);
+                seekResponse(channel);
                 break;
             case "publish":
                 publishResponse(channel, command);
@@ -322,7 +324,7 @@ public class ServerHandler extends SimpleChannelHandler {
         //only support amf0
         final Double objectEncoding = (Double) obj.get("objectEncoding");
         if(objectEncoding != null && objectEncoding != 0){
-            throw new RuntimeException("not support object encoding:" + objectEncoding);
+            throw new RuntimeException("(" + channel.getId() + ") Not support object encoding:" + objectEncoding);
         }
 
         // Window Ack, Set Peer BandWidth, Stream Begin
@@ -350,8 +352,8 @@ public class ServerHandler extends SimpleChannelHandler {
 
     // MessageType.COMMAND.play
     private void playResponse(final Channel channel, final Command play) {
-        final String playStreamName = (String) play.getArg(0);
-        this.playName = playStreamName;
+        final String streamName = (String) play.getArg(0);
+        this.playName = streamName;
 
         int playStart = -2;
         if (play.getArgCount() > 1) {
@@ -373,28 +375,28 @@ public class ServerHandler extends SimpleChannelHandler {
 
         /////////////////////////////
         // CHECK STREAM NAME
-        if (!resourceReleaseManager.checkStreamName(playStreamName, PublishType.LIVE.asString())) {
-            denyStream(channel, playStreamName, true);
+        if (!resourceReleaseManager.checkStreamName(streamName, PublishType.LIVE.asString())) {
+            denyStream(channel, streamName, false, "Fail to find the stream name. (" + streamName + ")");
             return;
         }
         /////////////////////////////
 
         // Published ServerStream 조회
-        publishStream = application.getStream(playStreamName);
+        publishStream = application.getStream(streamName);
         if (publishStream == null) {
             // create play ServerStream, PlayStream 정리 위해 playStream flag 사용
-            logger.warn("({}) [Play] Not Exist [{}] PublishStream.", clientId, playStreamName);
-            denyStream(channel, playStreamName, true);
+            logger.warn("({}) [Play] Not Exist [{}] PublishStream.", clientId, streamName);
+            denyStream(channel, streamName, false, "Fail to find the publish stream. (" + streamName + ")");
             return;
         }
 
         logger.debug("({}) [Play] streamName: {}, streamId: {}, start: {}, duration: {}, reset: {}",
-                clientId, playStreamName, streamId, playStart, playDuration, playReset
+                clientId, streamName, streamId, playStart, playDuration, playReset
         );
 
         // ---------- LIVE STREAMING ---------- //
         // live 타입으로 publish 했던 stream
-        if(publishStream.isLive()) {
+        if (publishStream.isLive()) {
             // ChunkSize, StreamIsRecorded, StreamBegin, PlayStart, Metadata
             for (final RtmpMessage message : getStartMessages(playResetCommand)) {
                 writeToStream(channel, message);
@@ -420,20 +422,22 @@ public class ServerHandler extends SimpleChannelHandler {
 
             // PublishStream subscribers 에 playStream channel 추가
             publishStream.addSubscriber(channel);
-            logger.info("({}) [Play] client requested live stream: {}, added to stream: {}", clientId, playStreamName, publishStream);
+            logger.info("({}) [Play] client requested live stream: {}, added to stream: {}", clientId, streamName, publishStream);
         } else {
-            denyStream(channel, playStreamName, true);
+            denyStream(channel, streamName, false, "Publish stream is not live. Fail to play. (" + streamName + ")");
         }
     }
 
     // MessageType.COMMAND.pause
-    private void pauseResponse(final Channel channel, final Command command) {
-        logger.warn("({}) cannot pause when live", channel.getId());
+    private void pauseResponse(final Channel channel) {
+        logger.warn("({}) Cannot pause when live", channel.getId());
+        denyStream(channel, null, false, "Cannot pause when live.");
     }
 
     // MessageType.COMMAND.seek
-    private void seekResponse(final Channel channel, final Command command) {
-        logger.warn("({}) cannot seek when live", channel.getId());
+    private void seekResponse(final Channel channel) {
+        logger.warn("({}) Cannot seek when live", channel.getId());
+        denyStream(channel, null, false, "Cannot seek when live.");
     }
 
     // // MessageType.COMMAND.publish
@@ -446,7 +450,7 @@ public class ServerHandler extends SimpleChannelHandler {
             /////////////////////////////
             // CHECK STREAM NAME
             if (!resourceReleaseManager.checkStreamName(streamName, publishTypeStr)) {
-                denyStream(channel, streamName, false);
+                denyStream(channel, streamName, true, "Fail to find the publish stream. (" + streamName + ")");
                 return;
             }
 
@@ -463,7 +467,7 @@ public class ServerHandler extends SimpleChannelHandler {
 
             if (publishStream == null) {
                 logger.warn("({}) [Publish] Fail to Create Publish ServerStream [streamId:{}]", clientId, this.streamId);
-                denyStream(channel, streamName, false);
+                denyStream(channel, streamName, true, "");
                 return;
             }
 
@@ -477,7 +481,7 @@ public class ServerHandler extends SimpleChannelHandler {
             logger.info("({}) [Publish] created publish stream {}", clientId, publishStream);
 
             // onStatus
-            channel.write(Command.publishStart(streamName, clientId, streamId));
+            channel.write(Command.publishStart(streamName, clientId));
             // Set ChunkSize, Stream Begin
             channel.write(new ChunkSize(4096));
             channel.write(Control.streamBegin(streamId));
@@ -497,12 +501,12 @@ public class ServerHandler extends SimpleChannelHandler {
                         break;
                     case RECORD: // DENY : 파일 스트리밍 지원하지 않음
                         logger.warn("[ServerHandler] Record is not implemented yet, un-publishing...");
-                        denyStream(channel, streamName, false);
+                        denyStream(channel, streamName, true, "Record is not implemented yet.");
                         releaseResource();
                         break;
                     case APPEND:
                         logger.warn("[ServerHandler] Append is not implemented yet, un-publishing...");
-                        denyStream(channel, streamName, false);
+                        denyStream(channel, streamName, true, "Append is not implemented yet.");
                         releaseResource();
                         break;
                 }
@@ -518,7 +522,7 @@ public class ServerHandler extends SimpleChannelHandler {
     // kafkaInfo, publishStream, streamId 정리
     private void releaseResource() {
         if (playName == null) {
-            resourceReleaseManager.unPublishIfLive(application, publishStream, streamId);
+            resourceReleaseManager.unPublishIfLive(application, publishStream);
         }
 
         resourceReleaseManager.releaseStreamId(streamId, clientId);
@@ -526,8 +530,8 @@ public class ServerHandler extends SimpleChannelHandler {
     }
 
     // RTMP 실패 메시지 전송, streamId 정리
-    private void denyStream(Channel channel, String streamName, boolean isPlay) {
-        resourceReleaseManager.sendRtmpFail(channel, streamName, streamId, isPlay);
+    private void denyStream(Channel channel, String streamName, boolean isPublishStream, String reason) {
+        resourceReleaseManager.sendRtmpFail(channel, streamName, isPublishStream, reason);
         resourceReleaseManager.releaseStreamId(streamId, clientId);
     }
 

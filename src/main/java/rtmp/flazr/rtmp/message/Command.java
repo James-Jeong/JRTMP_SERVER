@@ -27,7 +27,7 @@ import java.util.Arrays;
 import java.util.Map;
 
 /**
- * 
+ *
  * @author yama
  *
  */
@@ -83,11 +83,11 @@ public abstract class Command extends AbstractMessage {
     }
 
     private static Amf0Object onStatus(final OnStatus level, final String code,
-            final String description, final String details, final Pair ... pairs) {
+                                       final String description, final String details, final Pair ... pairs) {
 
         final Amf0Object object = object(
-            pair("level", level.asString()),
-            pair("code", code));
+                pair("level", level.asString()),
+                pair("code", code));
 
         if(description != null) {
             object.put("description", description);
@@ -99,7 +99,7 @@ public abstract class Command extends AbstractMessage {
     }
 
     private static Amf0Object onStatus(final OnStatus level, final String code,
-            final String description, final Pair ... pairs) {
+                                       final String description, final Pair ... pairs) {
 
         return onStatus(level, code, description, null, pairs);
     }
@@ -113,11 +113,11 @@ public abstract class Command extends AbstractMessage {
 
     public static Command connectSuccess(int transactionId) {
         Map<String, Object> object = onStatus(OnStatus.STATUS,
-            "NetConnection.Connect.Success", "Connection succeeded.",
-            pair("fmsVer", "FMS/3,5,1,516"),
-            pair("capabilities", 31.0),
-            pair("mode", 1.0),
-            pair("objectEncoding", 0.0));
+                "NetConnection.Connect.Success", "Connection succeeded.",
+                pair("fmsVer", "FMS/3,5,1,516"),
+                pair("capabilities", 31.0),
+                pair("mode", 1.0),
+                pair("objectEncoding", 0.0));
         return new rtmp.flazr.rtmp.message.CommandAmf0(transactionId, "_result", null, object);
     }
 
@@ -152,17 +152,16 @@ public abstract class Command extends AbstractMessage {
     }
 
     public static Command playStart(String playName, String clientId) {
-        Command play = playStatus("Start", "Started playing", playName, clientId);
-        return play;
+        return playStatus("Start", "Started playing", playName, clientId);
     }
 
     public static Command playStop(String playName, String clientId) {
         return playStatus("Stop", "Stopped playing", playName, clientId);
     }
 
-    public static Command playFailed(String playName, String clientId) {
+    public static Command playFailed(String reason) {
         Amf0Object status = onStatus(OnStatus.ERROR,
-                "NetStream.Play.Failed", "Stream not found");
+                "NetStream.Play.Failed", reason);
         Command command = new rtmp.flazr.rtmp.message.CommandAmf0("onStatus", null, status);
         command.header.setChannelId(8);
         return command;
@@ -215,11 +214,11 @@ public abstract class Command extends AbstractMessage {
         return publishStatus(OnStatus.STATUS, code, null, streamName, clientId, pairs);
     }
 
-    public static Command publishStart(String streamName, String clientId, int streamId) {
+    public static Command publishStart(String streamName, String clientId) {
         return publishStatus("NetStream.Publish.Start", streamName, clientId);
     }
 
-    public static Command unpublishSuccess(String streamName, String clientId, int streamId) {
+    public static Command unpublishSuccess(String streamName, String clientId) {
         return publishStatus("NetStream.Unpublish.Success", streamName, clientId);
     }
 
@@ -227,7 +226,7 @@ public abstract class Command extends AbstractMessage {
         return publishStatus(OnStatus.ERROR, code, description, streamName, clientId, pairs);
     }
 
-    public static Command publishFailed(String streamName, String clientId, int streamId) {
+    public static Command publishFailed(String streamName, String clientId) {
         return publishError("NetStream.Publish.Failed", "Unknown Stream Key", streamName, clientId);
     }
 

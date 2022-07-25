@@ -52,11 +52,11 @@ public class RtmpHeader {
 
     private Type headerType;
     private int channelId;
+    private int streamId;
     private int deltaTime;
     private int time;
     private int size;
     private MessageType messageType;
-    private int streamId;
 
     public RtmpHeader(ChannelBuffer in, RtmpHeader[] incompleteHeaders) {
         //=================== TYPE AND CHANNEL (1 - 3 bytes) ===================
